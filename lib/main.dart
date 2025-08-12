@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/top_page.dart';
 import 'screens/login_page.dart';
 import 'screens/mypage.dart';
+import 'screens/mypage_top.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const TopPage(),
         '/login': (context) => const LoginPage(),
         '/mypage': (context) => const MyPage(),
+        '/mypage_top': (context) => const MyPageTop(),
       },
     );
   }

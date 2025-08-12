@@ -22,7 +22,11 @@ class _LoginPageState extends State<LoginPage> {
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
       // TODO: 実際のログイン処理を実装
-      Navigator.pushNamed(context, '/mypage');
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/mypage_top',
+        (route) => false,
+      );
     }
   }
 
