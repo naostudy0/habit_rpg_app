@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'task_create_page.dart';
 import 'task_list_page.dart';
+import 'settings_page.dart';
 
 class MyPageTop extends StatelessWidget {
   const MyPageTop({super.key});
@@ -235,9 +236,11 @@ class MyPageTop extends StatelessWidget {
                 subtitle: const Text('アプリの設定を変更'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // TODO: 設定ページへの遷移
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('設定ページへ遷移予定')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsPage(),
+                    ),
                   );
                 },
               ),
