@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'task_create_page.dart';
 
 class MyPageTop extends StatelessWidget {
   const MyPageTop({super.key});
@@ -7,7 +8,7 @@ class MyPageTop extends StatelessWidget {
   Widget build(BuildContext context) {
     // 仮のユーザー名（後で実際のユーザー情報に置き換え）
     const String userName = "ユーザー";
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('マイページ'),
@@ -86,9 +87,9 @@ class MyPageTop extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // ナビゲーションセクション
             const Text(
               'メニュー',
@@ -98,7 +99,7 @@ class MyPageTop extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // 予定追加ボタン
             Card(
               elevation: 4,
@@ -124,16 +125,18 @@ class MyPageTop extends StatelessWidget {
                 subtitle: const Text('新しい習慣やタスクを追加'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // TODO: 予定追加ページへの遷移
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('予定追加ページへ遷移予定')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TaskCreatePage(),
+                    ),
                   );
                 },
               ),
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // 予定一覧ボタン
             Card(
               elevation: 4,
@@ -166,9 +169,9 @@ class MyPageTop extends StatelessWidget {
                 },
               ),
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // 統計・進捗ボタン
             Card(
               elevation: 4,
@@ -201,9 +204,9 @@ class MyPageTop extends StatelessWidget {
                 },
               ),
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // 設定ボタン
             Card(
               elevation: 4,
@@ -236,9 +239,9 @@ class MyPageTop extends StatelessWidget {
                 },
               ),
             ),
-            
+
             const Spacer(),
-            
+
             // ログアウトボタン
             SizedBox(
               width: double.infinity,
