@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'task_create_page.dart';
+import 'task_list_page.dart';
 
 class MyPageTop extends StatelessWidget {
   const MyPageTop({super.key});
@@ -162,9 +163,11 @@ class MyPageTop extends StatelessWidget {
                 subtitle: const Text('登録済みの習慣やタスクを確認'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // TODO: 予定一覧ページへの遷移
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('予定一覧ページへ遷移予定')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TaskListPage(),
+                    ),
                   );
                 },
               ),
