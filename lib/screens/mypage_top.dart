@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'task_create_page.dart';
 import 'task_list_page.dart';
 import 'settings_page.dart';
+import 'statistics_page.dart';
 
 class MyPageTop extends StatelessWidget {
   const MyPageTop({super.key});
@@ -201,9 +202,11 @@ class MyPageTop extends StatelessWidget {
                 subtitle: const Text('習慣の達成状況を確認'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // TODO: 統計・進捗ページへの遷移
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('統計・進捗ページへ遷移予定')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const StatisticsPage(),
+                    ),
                   );
                 },
               ),
