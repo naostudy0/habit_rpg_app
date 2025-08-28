@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,6 +12,8 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _apiService = ApiService();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -19,14 +22,51 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: 実際のログイン処理を実装
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/mypage_top',
-        (route) => false,
-      );
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        final response = await _apiService.login(
+          _emailController.text,
+          _passwordController.text,
+        );
+
+        // ログイン成功時の処理
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('ログインに成功しました'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // マイページに遷移
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/mypage_top',
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        // エラー時の処理
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('ログインエラー: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -94,11 +134,20 @@ class _LoginPageState extends State<LoginPage> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _handleLogin,
-                  child: const Text(
-                    'ログイン',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  onPressed: _isLoading ? null : _handleLogin,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'ログイン',
+                          style: TextStyle(fontSize: 16),
+                        ),
                 ),
               ),
             ],
