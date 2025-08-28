@@ -5,7 +5,6 @@ import 'screens/mypage.dart';
 import 'screens/mypage_top.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
