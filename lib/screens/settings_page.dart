@@ -4,6 +4,7 @@ import 'email_change_page.dart';
 import 'password_change_page.dart';
 import 'help_support_page.dart';
 import 'feedback_page.dart';
+import '../services/api_service.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -21,6 +22,8 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isAutoBackupEnabled = false;
   String _selectedLanguage = '日本語';
   String _selectedTimeFormat = '24時間';
+  final ApiService _apiService = ApiService();
+  bool _isLoggingOut = false;
 
   @override
   Widget build(BuildContext context) {
@@ -328,21 +331,30 @@ class _SettingsPageState extends State<SettingsPage> {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
-        onPressed: () {
+        onPressed: _isLoggingOut ? null : () {
           _showLogoutDialog();
         },
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           side: BorderSide(color: Colors.red[300]!),
         ),
-        child: Text(
-          'ログアウト',
-          style: TextStyle(
-            color: Colors.red[600],
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: _isLoggingOut
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.red[600]!),
+                ),
+              )
+            : Text(
+                'ログアウト',
+                style: TextStyle(
+                  color: Colors.red[600],
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
   }
@@ -465,24 +477,66 @@ class _SettingsPageState extends State<SettingsPage> {
           content: const Text('ログアウトしますか？'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: _isLoggingOut
+                  ? null
+                  : () => Navigator.of(context).pop(),
               child: const Text('キャンセル'),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/',
-                  (route) => false,
-                );
-              },
+              onPressed: _isLoggingOut
+                  ? null
+                  : () async {
+                      Navigator.of(context).pop();
+                      await _handleLogout();
+                    },
               child: const Text('ログアウト'),
             ),
           ],
         );
       },
     );
+  }
+
+  Future<void> _handleLogout() async {
+    setState(() {
+      _isLoggingOut = true;
+    });
+
+    try {
+      // APIサービスでログアウト処理（トークン削除も含む）
+      await _apiService.logout();
+
+      if (mounted) {
+        // ログイン画面に遷移
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/',
+          (route) => false,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ログアウトしました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('ログアウトエラー: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoggingOut = false;
+        });
+      }
+    }
   }
 
   void _showAboutDialog() {

@@ -14,6 +14,8 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final _apiService = ApiService();
   bool _isLoading = false;
+  String? _emailError;
+  String? _passwordError;
 
   @override
   void dispose() {
@@ -26,6 +28,12 @@ class _LoginPageState extends State<LoginPage> {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
+      });
+
+      // エラーメッセージをクリア
+      setState(() {
+        _emailError = null;
+        _passwordError = null;
       });
 
       try {
@@ -50,8 +58,31 @@ class _LoginPageState extends State<LoginPage> {
             (route) => false,
           );
         }
+      } on ApiException catch (e) {
+        // APIエラー時の処理
+        if (mounted) {
+          // フィールドごとのエラーメッセージを設定
+          setState(() {
+            _emailError = e.getFieldError('email');
+            _passwordError = e.getFieldError('password');
+          });
+
+          // フィールドエラーがない場合は、一般的なエラーメッセージを表示
+          if (_emailError == null && _passwordError == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.getErrorMessage()),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          } else {
+            // フィールドエラーがある場合は、フォームを再検証してエラーを表示
+            _formKey.currentState?.validate();
+          }
+        }
       } catch (e) {
-        // エラー時の処理
+        // その他のエラー時の処理
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -94,13 +125,18 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 40),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'メールアドレス',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.email),
+                  errorText: _emailError,
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
+                  // サーバーからのエラーメッセージがある場合はそれを優先
+                  if (_emailError != null) {
+                    return _emailError;
+                  }
                   if (value == null || value.isEmpty) {
                     return 'メールアドレスを入力してください';
                   }
@@ -113,18 +149,23 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'パスワード',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.lock),
+                  errorText: _passwordError,
                 ),
                 obscureText: true,
                 validator: (value) {
+                  // サーバーからのエラーメッセージがある場合はそれを優先
+                  if (_passwordError != null) {
+                    return _passwordError;
+                  }
                   if (value == null || value.isEmpty) {
                     return 'パスワードを入力してください';
                   }
-                  if (value.length < 6) {
-                    return 'パスワードは6文字以上で入力してください';
+                  if (value.length < 8) {
+                    return 'パスワードは8文字以上で入力してください';
                   }
                   return null;
                 },
