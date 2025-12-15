@@ -338,4 +338,44 @@ class ApiService {
       );
     }
   }
+
+  // 予定削除API
+  Future<void> deleteTask(String uuid) async {
+    try {
+      final headers = await _headers;
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/api/tasks/$uuid'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        // 削除成功
+        return;
+      } else {
+        // エラーレスポンスをパース
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: errorData['message'] as String? ?? '予定の削除に失敗しました',
+          errors: errorData['errors'] as Map<String, dynamic>?,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      if (e is FormatException) {
+        // JSONパースエラーの場合
+        throw ApiException(
+          statusCode: 0,
+          message: 'サーバーからの応答を解析できませんでした',
+          errors: null,
+        );
+      }
+      throw ApiException(
+        statusCode: 0,
+        message: 'ネットワークエラー: $e',
+        errors: null,
+      );
+    }
+  }
 }

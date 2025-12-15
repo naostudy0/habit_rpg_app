@@ -191,8 +191,18 @@ class _TaskEditPageState extends State<TaskEditPage> {
     }
   }
 
-  void _deleteTask() {
-    showDialog(
+  Future<void> _deleteTask() async {
+    if (_taskUuid == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('予定のUUIDが見つかりません'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -200,21 +210,11 @@ class _TaskEditPageState extends State<TaskEditPage> {
           content: const Text('この予定を削除しますか？\nこの操作は取り消せません。'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(context).pop(false),
               child: const Text('キャンセル'),
             ),
             TextButton(
-              onPressed: () {
-                // TODO: APIとの連携処理を実装
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('予定を削除しました（仮実装）'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.of(context).pop(true),
               style: TextButton.styleFrom(
                 foregroundColor: Colors.red,
               ),
@@ -224,6 +224,53 @@ class _TaskEditPageState extends State<TaskEditPage> {
         );
       },
     );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _apiService.deleteTask(_taskUuid!);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('予定を削除しました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true); // trueを返して、呼び出し元でリフレッシュできるようにする
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.getErrorMessage()),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('予定の削除に失敗しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
