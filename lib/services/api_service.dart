@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/environment.dart';
 import 'auth_service.dart';
@@ -198,6 +199,67 @@ class ApiService {
         throw ApiException(
           statusCode: response.statusCode,
           message: errorData['message'] as String? ?? '予定一覧の取得に失敗しました',
+          errors: errorData['errors'] as Map<String, dynamic>?,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      if (e is FormatException) {
+        // JSONパースエラーの場合
+        throw ApiException(
+          statusCode: 0,
+          message: 'サーバーからの応答を解析できませんでした',
+          errors: null,
+        );
+      }
+      throw ApiException(
+        statusCode: 0,
+        message: 'ネットワークエラー: $e',
+        errors: null,
+      );
+    }
+  }
+
+  // 予定作成API
+  Future<Map<String, dynamic>> createTask({
+    required String title,
+    required DateTime scheduledDate,
+    required TimeOfDay scheduledTime,
+    String? memo,
+  }) async {
+    try {
+      final headers = await _headers;
+
+      // 日付と時刻を結合してISO8601形式の文字列に変換
+      final scheduledDateTime = DateTime(
+        scheduledDate.year,
+        scheduledDate.month,
+        scheduledDate.day,
+        scheduledTime.hour,
+        scheduledTime.minute,
+      );
+
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/tasks'),
+        headers: headers,
+        body: jsonEncode({
+          'title': title,
+          'scheduled_date': scheduledDate.toIso8601String().split('T')[0], // YYYY-MM-DD形式
+          'scheduled_time': '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00',
+          if (memo != null && memo.isNotEmpty) 'memo': memo,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        return responseData;
+      } else {
+        // エラーレスポンスをパース
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: errorData['message'] as String? ?? '予定の作成に失敗しました',
           errors: errorData['errors'] as Map<String, dynamic>?,
         );
       }
