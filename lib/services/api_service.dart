@@ -281,4 +281,61 @@ class ApiService {
       );
     }
   }
+
+  // 予定更新API
+  Future<Map<String, dynamic>> updateTask({
+    required String uuid,
+    required String title,
+    required DateTime scheduledDate,
+    required TimeOfDay scheduledTime,
+    String? memo,
+  }) async {
+    try {
+      final headers = await _headers;
+
+      final response = await http.put(
+        Uri.parse('$_baseUrl/api/tasks/$uuid'),
+        headers: headers,
+        body: jsonEncode({
+          'title': title,
+          'scheduled_date': scheduledDate.toIso8601String().split('T')[0], // YYYY-MM-DD形式
+          'scheduled_time': '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00',
+          if (memo != null && memo.isNotEmpty) 'memo': memo,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        // 204 No Contentの場合は空のレスポンス
+        if (response.body.isEmpty) {
+          return {'result': true, 'message': '予定を更新しました'};
+        }
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        return responseData;
+      } else {
+        // エラーレスポンスをパース
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: errorData['message'] as String? ?? '予定の更新に失敗しました',
+          errors: errorData['errors'] as Map<String, dynamic>?,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      if (e is FormatException) {
+        // JSONパースエラーの場合
+        throw ApiException(
+          statusCode: 0,
+          message: 'サーバーからの応答を解析できませんでした',
+          errors: null,
+        );
+      }
+      throw ApiException(
+        statusCode: 0,
+        message: 'ネットワークエラー: $e',
+        errors: null,
+      );
+    }
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class TaskEditPage extends StatefulWidget {
   final Map<String, dynamic> task;
@@ -11,19 +12,69 @@ class TaskEditPage extends StatefulWidget {
 
 class _TaskEditPageState extends State<TaskEditPage> {
   final _formKey = GlobalKey<FormState>();
+  final _apiService = ApiService();
   late TextEditingController _titleController;
   late TextEditingController _memoController;
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
+  bool _isLoading = false;
+  String? _titleError;
+  String? _taskUuid;
 
   @override
   void initState() {
     super.initState();
+    // UUIDを取得
+    _taskUuid = widget.task['uuid'] ?? widget.task['id'];
+
     // 既存の予定データでフォームを初期化
-    _titleController = TextEditingController(text: widget.task['title']);
-    _memoController = TextEditingController(text: widget.task['memo'] ?? '');
-    _selectedDate = widget.task['date'];
-    _selectedTime = widget.task['time'];
+    final title = widget.task['title'] ?? widget.task['name'] ?? '';
+    final memo = widget.task['memo'] ?? widget.task['description'] ?? '';
+
+    _titleController = TextEditingController(text: title);
+    _memoController = TextEditingController(text: memo);
+
+    // 日付をパース
+    final taskDate = _parseDate(widget.task['date'] ?? widget.task['scheduled_date'] ?? widget.task['scheduled_at']);
+    _selectedDate = taskDate ?? DateTime.now();
+
+    // 時刻をパース
+    final taskTime = _parseTime(widget.task['time'] ?? widget.task['scheduled_time']);
+    _selectedTime = taskTime ?? TimeOfDay.now();
+  }
+
+  // 日付文字列をDateTimeに変換
+  DateTime? _parseDate(dynamic dateValue) {
+    if (dateValue == null) return null;
+    if (dateValue is DateTime) return dateValue;
+    if (dateValue is String) {
+      try {
+        return DateTime.parse(dateValue);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // 時刻文字列をTimeOfDayに変換
+  TimeOfDay? _parseTime(dynamic timeValue) {
+    if (timeValue == null) return null;
+    if (timeValue is TimeOfDay) return timeValue;
+    if (timeValue is String) {
+      try {
+        final parts = timeValue.split(':');
+        if (parts.length >= 2) {
+          return TimeOfDay(
+            hour: int.parse(parts[0]),
+            minute: int.parse(parts[1]),
+          );
+        }
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   @override
@@ -59,16 +110,84 @@ class _TaskEditPageState extends State<TaskEditPage> {
     }
   }
 
-  void _saveTask() {
-    if (_formKey.currentState!.validate()) {
-      // TODO: APIとの連携処理を実装
+  Future<void> _saveTask() async {
+    if (_taskUuid == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('予定を更新しました（仮実装）'),
-          backgroundColor: Colors.green,
+          content: Text('予定のUUIDが見つかりません'),
+          backgroundColor: Colors.red,
         ),
       );
-      Navigator.pop(context);
+      return;
+    }
+
+    // エラーメッセージをクリア
+    setState(() {
+      _titleError = null;
+    });
+
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        await _apiService.updateTask(
+          uuid: _taskUuid!,
+          title: _titleController.text.trim(),
+          scheduledDate: _selectedDate,
+          scheduledTime: _selectedTime,
+          memo: _memoController.text.trim().isEmpty ? null : _memoController.text.trim(),
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('予定を更新しました'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context, true); // trueを返して、呼び出し元でリフレッシュできるようにする
+        }
+      } on ApiException catch (e) {
+        // APIエラー時の処理
+        if (mounted) {
+          // フィールドごとのエラーメッセージを設定
+          setState(() {
+            _titleError = e.getFieldError('title');
+          });
+
+          // フィールドエラーがない場合は、一般的なエラーメッセージを表示
+          if (_titleError == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.getErrorMessage()),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          } else {
+            // フィールドエラーがある場合は、フォームを再検証してエラーを表示
+            _formKey.currentState?.validate();
+          }
+        }
+      } catch (e) {
+        // その他のエラー時の処理
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('予定の更新に失敗しました: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -150,10 +269,21 @@ class _TaskEditPageState extends State<TaskEditPage> {
                   ),
                   filled: true,
                   fillColor: Colors.grey[50],
+                  errorText: _titleError,
                 ),
                 validator: (value) {
+                  // サーバーからのエラーメッセージがある場合はそれを優先
+                  if (_titleError != null) {
+                    return _titleError;
+                  }
                   if (value == null || value.isEmpty) {
                     return 'タイトルを入力してください';
+                  }
+                  if (value.trim().isEmpty) {
+                    return 'タイトルを入力してください';
+                  }
+                  if (value.length > 255) {
+                    return 'タイトルは255文字以内で入力してください';
                   }
                   return null;
                 },
@@ -253,7 +383,7 @@ class _TaskEditPageState extends State<TaskEditPage> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _saveTask,
+                  onPressed: _isLoading ? null : _saveTask,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
@@ -262,13 +392,22 @@ class _TaskEditPageState extends State<TaskEditPage> {
                     ),
                     elevation: 2,
                   ),
-                  child: const Text(
-                    '変更を保存',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          '変更を保存',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],
