@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'task_create_page.dart';
 import 'task_list_page.dart';
 import 'settings_page.dart';
-import 'statistics_page.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 
@@ -18,6 +17,7 @@ class _MyPageTopState extends State<MyPageTop> {
   final AuthService _authService = AuthService();
   bool _isAuthenticated = false;
   bool _isCheckingAuth = true;
+  String _userName = 'ユーザー';
 
   @override
   void initState() {
@@ -29,9 +29,13 @@ class _MyPageTopState extends State<MyPageTop> {
     final isAuthenticated = await _authService.isAuthenticated();
 
     if (mounted) {
+      // ユーザー名を取得
+      final userName = await _authService.getUserName();
+
       setState(() {
         _isAuthenticated = isAuthenticated;
         _isCheckingAuth = false;
+        _userName = userName ?? 'ユーザー';
       });
 
       // 認証されていない場合はログイン画面にリダイレクト
@@ -65,8 +69,6 @@ class _MyPageTopState extends State<MyPageTop> {
         ),
       );
     }
-    // 仮のユーザー名（後で実際のユーザー情報に置き換え）
-    const String userName = "ユーザー";
 
     return Scaffold(
       appBar: AppBar(
@@ -124,7 +126,7 @@ class _MyPageTopState extends State<MyPageTop> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '$userNameさん',
+                              '$_userNameさん',
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -225,43 +227,6 @@ class _MyPageTopState extends State<MyPageTop> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const TaskListPage(),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // 統計・進捗ボタン
-            Card(
-              elevation: 4,
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.orange,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.analytics,
-                    color: Colors.white,
-                  ),
-                ),
-                title: const Text(
-                  '統計・進捗',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: const Text('習慣の達成状況を確認'),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const StatisticsPage(),
                     ),
                   );
                 },

@@ -110,6 +110,16 @@ class ApiService {
           await _authService.saveToken(token, expiresIn: expiresIn);
         }
 
+        // ユーザー情報を保存
+        if (responseData['data'] != null) {
+          final userData = responseData['data'] as Map<String, dynamic>;
+          final userName = userData['name'] ?? userData['username'] ?? userData['user_name'] ?? '';
+          final userEmail = userData['email'] ?? '';
+          if (userName.isNotEmpty && userEmail.isNotEmpty) {
+            await _authService.saveUserInfo(userName, userEmail);
+          }
+        }
+
         return responseData;
       } else {
         // エラーレスポンスをパース
@@ -154,6 +164,59 @@ class ApiService {
     } finally {
       // ローカルのトークンを削除
       await _authService.logout();
+    }
+  }
+
+  // 予定一覧取得API
+  Future<List<Map<String, dynamic>>> getTasks() async {
+    try {
+      final headers = await _headers;
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/tasks'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        // レスポンスの形式に応じてデータを取得
+        // 例: { "result": true, "data": [...] } または { "data": [...] } または [...]
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('data') && responseData['data'] is List) {
+            return List<Map<String, dynamic>>.from(responseData['data'] as List);
+          } else {
+            return [];
+          }
+        } else if (responseData is List) {
+          return List<Map<String, dynamic>>.from(responseData);
+        } else {
+          return [];
+        }
+      } else {
+        // エラーレスポンスをパース
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: errorData['message'] as String? ?? '予定一覧の取得に失敗しました',
+          errors: errorData['errors'] as Map<String, dynamic>?,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      if (e is FormatException) {
+        // JSONパースエラーの場合
+        throw ApiException(
+          statusCode: 0,
+          message: 'サーバーからの応答を解析できませんでした',
+          errors: null,
+        );
+      }
+      throw ApiException(
+        statusCode: 0,
+        message: 'ネットワークエラー: $e',
+        errors: null,
+      );
     }
   }
 }

@@ -8,6 +8,10 @@ class AuthService {
   static const String _tokenKey = 'auth_token';
   static const String _tokenExpiryKey = 'token_expiry';
   static const String _isAuthenticatedKey = 'is_authenticated';
+  static const String _userNameKey = 'user_name';
+  static const String _userEmailKey = 'user_email';
+  static const String _darkModeKey = 'dark_mode';
+  static const String _timeFormatKey = 'time_format';
 
   // トークンを保存
   Future<void> saveToken(String token, {int? expiresIn}) async {
@@ -71,11 +75,56 @@ class AuthService {
     return await isTokenValid();
   }
 
-  // ログアウト（トークンを削除）
+  // ユーザー情報を保存
+  Future<void> saveUserInfo(String name, String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userNameKey, name);
+    await prefs.setString(_userEmailKey, email);
+  }
+
+  // ユーザー名を取得
+  Future<String?> getUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userNameKey);
+  }
+
+  // ユーザーメールアドレスを取得
+  Future<String?> getUserEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userEmailKey);
+  }
+
+  // ダークモード設定を保存
+  Future<void> saveDarkMode(bool isDarkMode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_darkModeKey, isDarkMode);
+  }
+
+  // ダークモード設定を取得
+  Future<bool> getDarkMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_darkModeKey) ?? false;
+  }
+
+  // 時刻形式設定を保存
+  Future<void> saveTimeFormat(String timeFormat) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_timeFormatKey, timeFormat);
+  }
+
+  // 時刻形式設定を取得
+  Future<String> getTimeFormat() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_timeFormatKey) ?? '24時間';
+  }
+
+  // ログアウト（トークンとユーザー情報を削除）
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_tokenExpiryKey);
+    await prefs.remove(_userNameKey);
+    await prefs.remove(_userEmailKey);
     await prefs.setBool(_isAuthenticatedKey, false);
   }
 
