@@ -3,12 +3,68 @@ import 'task_create_page.dart';
 import 'task_list_page.dart';
 import 'settings_page.dart';
 import 'statistics_page.dart';
+import '../services/api_service.dart';
+import '../services/auth_service.dart';
 
-class MyPageTop extends StatelessWidget {
+class MyPageTop extends StatefulWidget {
   const MyPageTop({super.key});
 
   @override
+  State<MyPageTop> createState() => _MyPageTopState();
+}
+
+class _MyPageTopState extends State<MyPageTop> {
+  final ApiService _apiService = ApiService();
+  final AuthService _authService = AuthService();
+  bool _isAuthenticated = false;
+  bool _isCheckingAuth = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthStatus();
+  }
+
+  Future<void> _checkAuthStatus() async {
+    final isAuthenticated = await _authService.isAuthenticated();
+
+    if (mounted) {
+      setState(() {
+        _isAuthenticated = isAuthenticated;
+        _isCheckingAuth = false;
+      });
+
+      // 認証されていない場合はログイン画面にリダイレクト
+      if (!isAuthenticated) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/',
+            (route) => false,
+          );
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // 認証チェック中はローディング表示
+    if (_isCheckingAuth) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // 認証されていない場合は何も表示しない（リダイレクト中）
+    if (!_isAuthenticated) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     // 仮のユーザー名（後で実際のユーザー情報に置き換え）
     const String userName = "ユーザー";
 
@@ -255,13 +311,8 @@ class MyPageTop extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () {
-                  // TODO: ログアウト処理
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/',
-                    (route) => false,
-                  );
+                onPressed: () async {
+                  await _handleLogout();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -281,5 +332,37 @@ class MyPageTop extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleLogout() async {
+    try {
+      // APIサービスでログアウト処理（トークン削除も含む）
+      await _apiService.logout();
+
+      if (mounted) {
+        // ログイン画面に遷移
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/',
+          (route) => false,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ログアウトしました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('ログアウトエラー: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
