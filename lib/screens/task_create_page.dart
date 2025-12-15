@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class TaskCreatePage extends StatefulWidget {
   const TaskCreatePage({super.key});
@@ -11,8 +12,11 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _memoController = TextEditingController();
+  final _apiService = ApiService();
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
+  bool _isLoading = false;
+  String? _titleError;
 
   @override
   void dispose() {
@@ -47,16 +51,94 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
     }
   }
 
-  void _submitForm() {
+  // フォームをクリア
+  void _clearForm() {
+    // コントローラーをクリア
+    _titleController.clear();
+    _memoController.clear();
+
+    // 状態を更新
+    setState(() {
+      _selectedDate = DateTime.now();
+      _selectedTime = TimeOfDay.now();
+      _titleError = null;
+    });
+
+    // フォームのバリデーション状態をリセット
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _formKey.currentState?.reset();
+    });
+  }
+
+  Future<void> _submitForm() async {
+    // エラーメッセージをクリア
+    setState(() {
+      _titleError = null;
+    });
+
     if (_formKey.currentState!.validate()) {
-      // TODO: APIとの連携処理を実装
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('予定を登録しました（仮実装）'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        await _apiService.createTask(
+          title: _titleController.text.trim(),
+          scheduledDate: _selectedDate,
+          scheduledTime: _selectedTime,
+          memo: _memoController.text.trim().isEmpty ? null : _memoController.text.trim(),
+        );
+
+        if (mounted) {
+          // フォームをクリア
+          _clearForm();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('予定を登録しました'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } on ApiException catch (e) {
+        // APIエラー時の処理
+        if (mounted) {
+          // フィールドごとのエラーメッセージを設定
+          setState(() {
+            _titleError = e.getFieldError('title');
+          });
+
+          // フィールドエラーがない場合は、一般的なエラーメッセージを表示
+          if (_titleError == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.getErrorMessage()),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          } else {
+            // フィールドエラーがある場合は、フォームを再検証してエラーを表示
+            _formKey.currentState?.validate();
+          }
+        }
+      } catch (e) {
+        // その他のエラー時の処理
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('予定の登録に失敗しました: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -96,10 +178,21 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
                   ),
                   filled: true,
                   fillColor: Colors.grey[50],
+                  errorText: _titleError,
                 ),
                 validator: (value) {
+                  // サーバーからのエラーメッセージがある場合はそれを優先
+                  if (_titleError != null) {
+                    return _titleError;
+                  }
                   if (value == null || value.isEmpty) {
                     return 'タイトルを入力してください';
+                  }
+                  if (value.trim().isEmpty) {
+                    return 'タイトルを入力してください';
+                  }
+                  if (value.length > 255) {
+                    return 'タイトルは255文字以内で入力してください';
                   }
                   return null;
                 },
@@ -199,7 +292,7 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _submitForm,
+                  onPressed: _isLoading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
@@ -208,13 +301,22 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
                     ),
                     elevation: 2,
                   ),
-                  child: const Text(
-                    '予定を登録',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          '予定を登録',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],
