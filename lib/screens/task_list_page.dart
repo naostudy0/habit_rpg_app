@@ -50,6 +50,93 @@ class _TaskListPageState extends State<TaskListPage> {
     await _loadTasks();
   }
 
+  // 予定削除
+  Future<void> _deleteTask(Map<String, dynamic> task) async {
+    final taskUuid = task['uuid'] ?? task['id'];
+    if (taskUuid == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('予定のUUIDが見つかりません'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('予定を削除'),
+          content: const Text('この予定を削除しますか？\nこの操作は取り消せません。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('削除'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await _apiService.deleteTask(taskUuid.toString());
+      // 削除成功後、一覧を再読み込み
+      await _loadTasks();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('予定を削除しました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.getErrorMessage();
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.getErrorMessage()),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('予定の削除に失敗しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   // 日付文字列をDateTimeに変換
   DateTime? _parseDate(dynamic dateValue) {
     if (dateValue == null) return null;
@@ -201,6 +288,7 @@ class _TaskListPageState extends State<TaskListPage> {
             itemCount: _tasks.length,
             itemBuilder: (context, index) {
               final task = _tasks[index];
+              final taskUuid = task['uuid'] ?? task['id'];
               final taskDate = _parseDate(task['date'] ?? task['scheduled_date'] ?? task['scheduled_at']);
               final taskTime = _parseTime(task['time'] ?? task['scheduled_time']);
               final isCompleted = task['is_completed'] ?? task['isCompleted'] ?? false;
@@ -208,105 +296,132 @@ class _TaskListPageState extends State<TaskListPage> {
               final memo = task['memo'] ?? task['description'] ?? '';
 
               return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                elevation: 2,
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: isCompleted
-                          ? Colors.green.withOpacity(0.2)
-                          : Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(25),
+                key: Key(taskUuid?.toString() ?? index.toString()),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 2,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    leading: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: isCompleted
+                            ? Colors.green.withOpacity(0.2)
+                            : Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Icon(
+                        isCompleted ? Icons.check : Icons.schedule,
+                        color: isCompleted
+                            ? Colors.green
+                            : Theme.of(context).colorScheme.primary,
+                      ),
                     ),
-                    child: Icon(
-                      isCompleted ? Icons.check : Icons.schedule,
-                      color: isCompleted
-                          ? Colors.green
-                          : Theme.of(context).colorScheme.primary,
+                    title: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        decoration: isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
                     ),
-                  ),
-                  title: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      decoration: isCompleted
-                          ? TextDecoration.lineThrough
-                          : null,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      if (taskDate != null || taskTime != null)
-                        Row(
-                          children: [
-                            if (taskDate != null) ...[
-                              Icon(
-                                Icons.calendar_today,
-                                size: 14,
-                                color: Colors.grey[600],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${taskDate.year}/${taskDate.month.toString().padLeft(2, '0')}/${taskDate.day.toString().padLeft(2, '0')}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                            if (taskDate != null && taskTime != null)
-                              const SizedBox(width: 16),
-                            if (taskTime != null) ...[
-                              Icon(
-                                Icons.access_time,
-                                size: 14,
-                                color: Colors.grey[600],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${taskTime.hour.toString().padLeft(2, '0')}:${taskTime.minute.toString().padLeft(2, '0')}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      if (memo.isNotEmpty) ...[
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         const SizedBox(height: 4),
-                        Text(
-                          memo,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                        if (taskDate != null || taskTime != null)
+                          Row(
+                            children: [
+                              if (taskDate != null) ...[
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 14,
+                                  color: Colors.grey[600],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${taskDate.year}/${taskDate.month.toString().padLeft(2, '0')}/${taskDate.day.toString().padLeft(2, '0')}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                              if (taskDate != null && taskTime != null)
+                                const SizedBox(width: 16),
+                              if (taskTime != null) ...[
+                                Icon(
+                                  Icons.access_time,
+                                  size: 14,
+                                  color: Colors.grey[600],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${taskTime.hour.toString().padLeft(2, '0')}:${taskTime.minute.toString().padLeft(2, '0')}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        if (memo.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            memo,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          color: Colors.grey[600],
+                          onPressed: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TaskEditPage(task: task),
+                              ),
+                            );
+                            // 編集画面から戻ってきたら、削除された可能性があるので一覧を再読み込み
+                            if (result == true) {
+                              _loadTasks();
+                            }
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          color: Colors.red[400],
+                          onPressed: () => _deleteTask(task),
                         ),
                       ],
-                    ],
+                    ),
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TaskEditPage(task: task),
+                        ),
+                      );
+                      // 編集画面から戻ってきたら、削除された可能性があるので一覧を再読み込み
+                      if (result == true) {
+                        _loadTasks();
+                      }
+                    },
                   ),
-                  trailing: Icon(
-                    Icons.edit,
-                    color: Colors.grey[400],
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TaskEditPage(task: task),
-                      ),
-                    );
-                  },
-                ),
-              );
+                );
             },
           ),
           // リフレッシュ中のオーバーレイ
