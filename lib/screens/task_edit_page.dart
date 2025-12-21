@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/error_handler.dart';
+import '../services/loading_service.dart';
+import '../widgets/loading_widget.dart';
 import '../models/task.dart';
 
 class TaskEditPage extends StatefulWidget {
@@ -16,13 +18,16 @@ class _TaskEditPageState extends State<TaskEditPage> {
   final _formKey = GlobalKey<FormState>();
   final _apiService = ApiService();
   final _errorHandler = ErrorHandler();
+  final _loadingService = LoadingService();
   late TextEditingController _titleController;
   late TextEditingController _memoController;
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
-  bool _isLoading = false;
   String? _titleError;
   String? _taskUuid;
+
+  static const String _loadingOperationUpdate = 'update_task';
+  static const String _loadingOperationDelete = 'delete_task';
 
   @override
   void initState() {
@@ -89,9 +94,7 @@ class _TaskEditPageState extends State<TaskEditPage> {
     });
 
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      _loadingService.setLoading(_loadingOperationUpdate, true);
 
       try {
         await _apiService.updateTask(
@@ -133,9 +136,7 @@ class _TaskEditPageState extends State<TaskEditPage> {
         }
       } finally {
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
+          _loadingService.setLoading(_loadingOperationUpdate, false);
         }
       }
     }
@@ -179,9 +180,7 @@ class _TaskEditPageState extends State<TaskEditPage> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    _loadingService.setLoading(_loadingOperationDelete, true);
 
     try {
       await _apiService.deleteTask(_taskUuid!);
@@ -205,32 +204,31 @@ class _TaskEditPageState extends State<TaskEditPage> {
       }
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        _loadingService.setLoading(_loadingOperationDelete, false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('予定を編集'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: _deleteTask,
-            color: Colors.red,
+    return LoadingWidget(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('予定を編集'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
           ),
-        ],
-      ),
-      body: Padding(
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _loadingService.isLoading(_loadingOperationDelete) ? null : _deleteTask,
+              color: Colors.red,
+            ),
+          ],
+        ),
+        body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
@@ -369,7 +367,7 @@ class _TaskEditPageState extends State<TaskEditPage> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _saveTask,
+                  onPressed: _loadingService.isLoading(_loadingOperationUpdate) ? null : _saveTask,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
@@ -378,14 +376,10 @@ class _TaskEditPageState extends State<TaskEditPage> {
                     ),
                     elevation: 2,
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
+                  child: _loadingService.isLoading(_loadingOperationUpdate)
+                      ? const SimpleLoadingIndicator(
+                          color: Colors.white,
+                          size: 20,
                         )
                       : const Text(
                           '変更を保存',
@@ -399,6 +393,7 @@ class _TaskEditPageState extends State<TaskEditPage> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/error_handler.dart';
+import '../services/loading_service.dart';
+import '../widgets/loading_widget.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,9 +17,11 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final _apiService = ApiService();
   final _errorHandler = ErrorHandler();
-  bool _isLoading = false;
+  final _loadingService = LoadingService();
   String? _emailError;
   String? _passwordError;
+
+  static const String _loadingOperation = 'login';
 
   @override
   void dispose() {
@@ -28,9 +32,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      _loadingService.setLoading(_loadingOperation, true);
 
       // エラーメッセージをクリア
       setState(() {
@@ -83,9 +85,7 @@ class _LoginPageState extends State<LoginPage> {
         }
       } finally {
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
+          _loadingService.setLoading(_loadingOperation, false);
         }
       }
     }
@@ -93,95 +93,94 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('ログイン'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Habit RPG',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+    return LoadingWidget(
+      operation: _loadingOperation,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('ログイン'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Habit RPG',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 40),
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'メールアドレス',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.email),
-                  errorText: _emailError,
+                const SizedBox(height: 40),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: 'メールアドレス',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.email),
+                    errorText: _emailError,
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    // サーバーからのエラーメッセージがある場合はそれを優先
+                    if (_emailError != null) {
+                      return _emailError;
+                    }
+                    if (value == null || value.isEmpty) {
+                      return 'メールアドレスを入力してください';
+                    }
+                    if (!value.contains('@')) {
+                      return '有効なメールアドレスを入力してください';
+                    }
+                    return null;
+                  },
                 ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  // サーバーからのエラーメッセージがある場合はそれを優先
-                  if (_emailError != null) {
-                    return _emailError;
-                  }
-                  if (value == null || value.isEmpty) {
-                    return 'メールアドレスを入力してください';
-                  }
-                  if (!value.contains('@')) {
-                    return '有効なメールアドレスを入力してください';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: 'パスワード',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock),
-                  errorText: _passwordError,
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(
+                    labelText: 'パスワード',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock),
+                    errorText: _passwordError,
+                  ),
+                  obscureText: true,
+                  validator: (value) {
+                    // サーバーからのエラーメッセージがある場合はそれを優先
+                    if (_passwordError != null) {
+                      return _passwordError;
+                    }
+                    if (value == null || value.isEmpty) {
+                      return 'パスワードを入力してください';
+                    }
+                    if (value.length < 8) {
+                      return 'パスワードは8文字以上で入力してください';
+                    }
+                    return null;
+                  },
                 ),
-                obscureText: true,
-                validator: (value) {
-                  // サーバーからのエラーメッセージがある場合はそれを優先
-                  if (_passwordError != null) {
-                    return _passwordError;
-                  }
-                  if (value == null || value.isEmpty) {
-                    return 'パスワードを入力してください';
-                  }
-                  if (value.length < 8) {
-                    return 'パスワードは8文字以上で入力してください';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _loadingService.isLoading(_loadingOperation) ? null : _handleLogin,
+                    child: _loadingService.isLoading(_loadingOperation)
+                        ? const SimpleLoadingIndicator(
+                            color: Colors.white,
+                            size: 20,
+                          )
+                        : const Text(
+                            'ログイン',
+                            style: TextStyle(fontSize: 16),
                           ),
-                        )
-                      : const Text(
-                          'ログイン',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

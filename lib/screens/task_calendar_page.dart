@@ -4,6 +4,8 @@ import 'task_create_page.dart';
 import 'task_edit_page.dart';
 import '../services/api_service.dart';
 import '../services/error_handler.dart';
+import '../services/loading_service.dart';
+import '../widgets/loading_widget.dart';
 import '../models/task.dart';
 
 class TaskCalendarPage extends StatefulWidget {
@@ -16,14 +18,16 @@ class TaskCalendarPage extends StatefulWidget {
 class _TaskCalendarPageState extends State<TaskCalendarPage> {
   final ApiService _apiService = ApiService();
   final ErrorHandler _errorHandler = ErrorHandler();
+  final LoadingService _loadingService = LoadingService();
   List<Task> _tasks = [];
-  bool _isLoading = false;
   bool _isInitialLoading = true;
   String? _errorMessage;
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   Map<DateTime, List<Task>> _events = {};
   final Set<String> _completingTaskUuids = {}; // 完了状態切り替え中のタスクUUID
+
+  static const String _loadingOperation = 'load_tasks';
 
   @override
   void initState() {
@@ -35,25 +39,25 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
   // 予定一覧を取得
   Future<void> _loadTasks() async {
     setState(() {
-      _isLoading = true;
       _errorMessage = null;
     });
+    _loadingService.setLoading(_loadingOperation, true);
 
     try {
       final tasks = await _apiService.getTasks();
       setState(() {
         _tasks = tasks;
         _events = _groupTasksByDate(tasks);
-        _isLoading = false;
         _isInitialLoading = false;
       });
     } catch (e) {
       setState(() {
         _errorMessage = _errorHandler.getErrorMessage(e);
-        _isLoading = false;
         _isInitialLoading = false;
       });
       _errorHandler.logError(e, context: '予定一覧取得（カレンダー）');
+    } finally {
+      _loadingService.setLoading(_loadingOperation, false);
     }
   }
 
@@ -195,34 +199,36 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('カレンダー'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TaskCreatePage(
-                    initialDate: _selectedDay,
-                  ),
-                ),
-              );
-              if (result == true) {
-                _loadTasks();
-              }
-            },
+    return LoadingWidget(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('カレンダー'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
           ),
-        ],
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TaskCreatePage(
+                      initialDate: _selectedDay,
+                    ),
+                  ),
+                );
+                if (result == true) {
+                  _loadTasks();
+                }
+              },
+            ),
+          ],
+        ),
+        body: _buildBody(),
       ),
-      body: _buildBody(),
     );
   }
 

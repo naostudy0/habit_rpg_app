@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/error_handler.dart';
+import '../services/loading_service.dart';
+import '../widgets/loading_widget.dart';
 
 class TaskCreatePage extends StatefulWidget {
   final DateTime? initialDate;
@@ -17,10 +19,12 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
   final _memoController = TextEditingController();
   final _apiService = ApiService();
   final _errorHandler = ErrorHandler();
+  final _loadingService = LoadingService();
   late DateTime _selectedDate;
   TimeOfDay _selectedTime = TimeOfDay.now();
-  bool _isLoading = false;
   String? _titleError;
+
+  static const String _loadingOperation = 'create_task';
 
   @override
   void initState() {
@@ -87,9 +91,7 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
     });
 
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      _loadingService.setLoading(_loadingOperation, true);
 
       try {
         await _apiService.createTask(
@@ -132,9 +134,7 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
         }
       } finally {
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
+          _loadingService.setLoading(_loadingOperation, false);
         }
       }
     }
@@ -142,16 +142,18 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('新しい予定'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+    return LoadingWidget(
+      operation: _loadingOperation,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('新しい予定'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-      ),
-      body: Padding(
+        body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
@@ -290,7 +292,7 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submitForm,
+                  onPressed: _loadingService.isLoading(_loadingOperation) ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
@@ -299,14 +301,10 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
                     ),
                     elevation: 2,
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
+                  child: _loadingService.isLoading(_loadingOperation)
+                      ? const SimpleLoadingIndicator(
+                          color: Colors.white,
+                          size: 20,
                         )
                       : const Text(
                           '予定を登録',
@@ -320,6 +318,7 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
