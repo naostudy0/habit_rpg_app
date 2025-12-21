@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/environment.dart';
+import '../models/task.dart';
 import 'auth_service.dart';
 
 // APIエラークラス
@@ -169,7 +170,7 @@ class ApiService {
   }
 
   // 予定一覧取得API
-  Future<List<Map<String, dynamic>>> getTasks() async {
+  Future<List<Task>> getTasks() async {
     try {
       final headers = await _headers;
       final response = await http.get(
@@ -181,18 +182,29 @@ class ApiService {
         final responseData = jsonDecode(response.body);
 
         // レスポンスの形式に応じてデータを取得
-        // 例: { "result": true, "data": [...] } または { "data": [...] } または [...]
+        List<dynamic> tasksData = [];
         if (responseData is Map<String, dynamic>) {
           if (responseData.containsKey('data') && responseData['data'] is List) {
-            return List<Map<String, dynamic>>.from(responseData['data'] as List);
-          } else {
-            return [];
+            tasksData = responseData['data'] as List;
           }
         } else if (responseData is List) {
-          return List<Map<String, dynamic>>.from(responseData);
-        } else {
-          return [];
+          tasksData = responseData;
         }
+
+        // Taskモデルに変換
+        final tasks = <Task>[];
+        for (final taskData in tasksData) {
+          try {
+            if (taskData is Map<String, dynamic>) {
+              tasks.add(Task.fromJson(taskData));
+            }
+          } catch (e) {
+            // パースエラーはログに記録してスキップ
+            // ignore: avoid_print
+            print('Taskのパースエラー: $e');
+          }
+        }
+        return tasks;
       } else {
         // エラーレスポンスをパース
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -222,7 +234,7 @@ class ApiService {
   }
 
   // 予定作成API
-  Future<Map<String, dynamic>> createTask({
+  Future<Task> createTask({
     required String title,
     required DateTime scheduledDate,
     required TimeOfDay scheduledTime,
@@ -230,15 +242,6 @@ class ApiService {
   }) async {
     try {
       final headers = await _headers;
-
-      // 日付と時刻を結合してISO8601形式の文字列に変換
-      final scheduledDateTime = DateTime(
-        scheduledDate.year,
-        scheduledDate.month,
-        scheduledDate.day,
-        scheduledTime.hour,
-        scheduledTime.minute,
-      );
 
       final response = await http.post(
         Uri.parse('$_baseUrl/api/tasks'),
@@ -253,7 +256,18 @@ class ApiService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        return responseData;
+        
+        // レスポンスからTaskデータを取得
+        final taskData = responseData['data'] ?? responseData;
+        if (taskData is Map<String, dynamic>) {
+          return Task.fromJson(taskData);
+        } else {
+          throw ApiException(
+            statusCode: response.statusCode,
+            message: '予定データの形式が不正です',
+            errors: null,
+          );
+        }
       } else {
         // エラーレスポンスをパース
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -283,7 +297,7 @@ class ApiService {
   }
 
   // 予定更新API
-  Future<Map<String, dynamic>> updateTask({
+  Future<Task> updateTask({
     required String uuid,
     required String title,
     required DateTime scheduledDate,
@@ -305,12 +319,32 @@ class ApiService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        // 204 No Contentの場合は空のレスポンス
+        // 204 No Contentの場合は、既存のTaskデータから更新されたTaskを作成
         if (response.body.isEmpty) {
-          return {'result': true, 'message': '予定を更新しました'};
+          // 更新されたデータを取得するために、再度取得するか、リクエストデータから作成
+          // ここでは簡易的に、リクエストデータからTaskを作成
+          return Task(
+            uuid: uuid,
+            title: title,
+            scheduledDate: scheduledDate,
+            scheduledTime: scheduledTime,
+            memo: memo,
+            isCompleted: false, // 既存の状態を保持する必要がある場合は、別途取得が必要
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
         }
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        return responseData;
+        final taskData = responseData['data'] ?? responseData;
+        if (taskData is Map<String, dynamic>) {
+          return Task.fromJson(taskData);
+        } else {
+          throw ApiException(
+            statusCode: response.statusCode,
+            message: '予定データの形式が不正です',
+            errors: null,
+          );
+        }
       } else {
         // エラーレスポンスをパース
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;

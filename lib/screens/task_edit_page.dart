@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../models/task.dart';
 
 class TaskEditPage extends StatefulWidget {
-  final Map<String, dynamic> task;
+  final Task task;
 
   const TaskEditPage({super.key, required this.task});
 
@@ -25,56 +26,15 @@ class _TaskEditPageState extends State<TaskEditPage> {
   void initState() {
     super.initState();
     // UUIDを取得
-    _taskUuid = widget.task['uuid'] ?? widget.task['id'];
+    _taskUuid = widget.task.uuid;
 
     // 既存の予定データでフォームを初期化
-    final title = widget.task['title'] ?? widget.task['name'] ?? '';
-    final memo = widget.task['memo'] ?? widget.task['description'] ?? '';
+    _titleController = TextEditingController(text: widget.task.title);
+    _memoController = TextEditingController(text: widget.task.memo ?? '');
 
-    _titleController = TextEditingController(text: title);
-    _memoController = TextEditingController(text: memo);
-
-    // 日付をパース
-    final taskDate = _parseDate(widget.task['date'] ?? widget.task['scheduled_date'] ?? widget.task['scheduled_at']);
-    _selectedDate = taskDate ?? DateTime.now();
-
-    // 時刻をパース
-    final taskTime = _parseTime(widget.task['time'] ?? widget.task['scheduled_time']);
-    _selectedTime = taskTime ?? TimeOfDay.now();
-  }
-
-  // 日付文字列をDateTimeに変換
-  DateTime? _parseDate(dynamic dateValue) {
-    if (dateValue == null) return null;
-    if (dateValue is DateTime) return dateValue;
-    if (dateValue is String) {
-      try {
-        return DateTime.parse(dateValue);
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  // 時刻文字列をTimeOfDayに変換
-  TimeOfDay? _parseTime(dynamic timeValue) {
-    if (timeValue == null) return null;
-    if (timeValue is TimeOfDay) return timeValue;
-    if (timeValue is String) {
-      try {
-        final parts = timeValue.split(':');
-        if (parts.length >= 2) {
-          return TimeOfDay(
-            hour: int.parse(parts[0]),
-            minute: int.parse(parts[1]),
-          );
-        }
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
+    // 日付と時刻を設定
+    _selectedDate = widget.task.scheduledDate;
+    _selectedTime = widget.task.scheduledTime;
   }
 
   @override
@@ -111,7 +71,7 @@ class _TaskEditPageState extends State<TaskEditPage> {
   }
 
   Future<void> _saveTask() async {
-    if (_taskUuid == null) {
+    if (_taskUuid == null || _taskUuid!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('予定のUUIDが見つかりません'),
@@ -192,7 +152,7 @@ class _TaskEditPageState extends State<TaskEditPage> {
   }
 
   Future<void> _deleteTask() async {
-    if (_taskUuid == null) {
+    if (_taskUuid == null || _taskUuid!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('予定のUUIDが見つかりません'),

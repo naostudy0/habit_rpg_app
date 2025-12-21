@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'task_edit_page.dart';
 import '../services/api_service.dart';
+import '../models/task.dart';
 
 class TaskListPage extends StatefulWidget {
   const TaskListPage({super.key});
@@ -11,7 +12,7 @@ class TaskListPage extends StatefulWidget {
 
 class _TaskListPageState extends State<TaskListPage> {
   final ApiService _apiService = ApiService();
-  List<Map<String, dynamic>> _tasks = [];
+  List<Task> _tasks = [];
   bool _isLoading = false;
   bool _isInitialLoading = true;
   String? _errorMessage;
@@ -51,9 +52,9 @@ class _TaskListPageState extends State<TaskListPage> {
   }
 
   // 予定削除
-  Future<void> _deleteTask(Map<String, dynamic> task) async {
-    final taskUuid = task['uuid'] ?? task['id'];
-    if (taskUuid == null) {
+  Future<void> _deleteTask(Task task) async {
+    final taskUuid = task.uuid;
+    if (taskUuid.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('予定のUUIDが見つかりません'),
@@ -96,7 +97,7 @@ class _TaskListPageState extends State<TaskListPage> {
     });
 
     try {
-      await _apiService.deleteTask(taskUuid.toString());
+      await _apiService.deleteTask(taskUuid);
       // 削除成功後、一覧を再読み込み
       await _loadTasks();
       if (mounted) {
@@ -137,39 +138,6 @@ class _TaskListPageState extends State<TaskListPage> {
     }
   }
 
-  // 日付文字列をDateTimeに変換
-  DateTime? _parseDate(dynamic dateValue) {
-    if (dateValue == null) return null;
-    if (dateValue is DateTime) return dateValue;
-    if (dateValue is String) {
-      try {
-        return DateTime.parse(dateValue);
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  // 時刻文字列をTimeOfDayに変換
-  TimeOfDay? _parseTime(dynamic timeValue) {
-    if (timeValue == null) return null;
-    if (timeValue is TimeOfDay) return timeValue;
-    if (timeValue is String) {
-      try {
-        final parts = timeValue.split(':');
-        if (parts.length >= 2) {
-          return TimeOfDay(
-            hour: int.parse(parts[0]),
-            minute: int.parse(parts[1]),
-          );
-        }
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -288,140 +256,128 @@ class _TaskListPageState extends State<TaskListPage> {
             itemCount: _tasks.length,
             itemBuilder: (context, index) {
               final task = _tasks[index];
-              final taskUuid = task['uuid'] ?? task['id'];
-              final taskDate = _parseDate(task['date'] ?? task['scheduled_date'] ?? task['scheduled_at']);
-              final taskTime = _parseTime(task['time'] ?? task['scheduled_time']);
-              final isCompleted = task['is_completed'] ?? task['isCompleted'] ?? false;
-              final title = task['title'] ?? task['name'] ?? 'タイトルなし';
-              final memo = task['memo'] ?? task['description'] ?? '';
 
               return Card(
-                key: Key(taskUuid?.toString() ?? index.toString()),
-                  margin: const EdgeInsets.only(bottom: 12),
-                  elevation: 2,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    leading: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: isCompleted
-                            ? Colors.green.withOpacity(0.2)
-                            : Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: Icon(
-                        isCompleted ? Icons.check : Icons.schedule,
-                        color: isCompleted
-                            ? Colors.green
-                            : Theme.of(context).colorScheme.primary,
-                      ),
+                key: Key(task.uuid),
+                margin: const EdgeInsets.only(bottom: 12),
+                elevation: 2,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16),
+                  leading: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: task.isCompleted
+                          ? Colors.green.withOpacity(0.2)
+                          : Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(25),
                     ),
-                    title: Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        decoration: isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
-                      ),
+                    child: Icon(
+                      task.isCompleted ? Icons.check : Icons.schedule,
+                      color: task.isCompleted
+                          ? Colors.green
+                          : Theme.of(context).colorScheme.primary,
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        if (taskDate != null || taskTime != null)
-                          Row(
-                            children: [
-                              if (taskDate != null) ...[
-                                Icon(
-                                  Icons.calendar_today,
-                                  size: 14,
-                                  color: Colors.grey[600],
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${taskDate.year}/${taskDate.month.toString().padLeft(2, '0')}/${taskDate.day.toString().padLeft(2, '0')}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                              if (taskDate != null && taskTime != null)
-                                const SizedBox(width: 16),
-                              if (taskTime != null) ...[
-                                Icon(
-                                  Icons.access_time,
-                                  size: 14,
-                                  color: Colors.grey[600],
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${taskTime.hour.toString().padLeft(2, '0')}:${taskTime.minute.toString().padLeft(2, '0')}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ],
+                  ),
+                  title: Text(
+                    task.title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      decoration: task.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 14,
+                            color: Colors.grey[600],
                           ),
-                        if (memo.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(width: 4),
                           Text(
-                            memo,
+                            '${task.scheduledDate.year}/${task.scheduledDate.month.toString().padLeft(2, '0')}/${task.scheduledDate.day.toString().padLeft(2, '0')}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(width: 16),
+                          Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${task.scheduledTime.hour.toString().padLeft(2, '0')}:${task.scheduledTime.minute.toString().padLeft(2, '0')}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
                           ),
                         ],
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          color: Colors.grey[600],
-                          onPressed: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => TaskEditPage(task: task),
-                              ),
-                            );
-                            // 編集画面から戻ってきたら、削除された可能性があるので一覧を再読み込み
-                            if (result == true) {
-                              _loadTasks();
-                            }
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          color: Colors.red[400],
-                          onPressed: () => _deleteTask(task),
+                      ),
+                      if (task.memo != null && task.memo!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          task.memo!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
-                    ),
-                    onTap: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TaskEditPage(task: task),
-                        ),
-                      );
-                      // 編集画面から戻ってきたら、削除された可能性があるので一覧を再読み込み
-                      if (result == true) {
-                        _loadTasks();
-                      }
-                    },
+                    ],
                   ),
-                );
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        color: Colors.grey[600],
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TaskEditPage(task: task),
+                            ),
+                          );
+                          // 編集画面から戻ってきたら、削除された可能性があるので一覧を再読み込み
+                          if (result == true) {
+                            _loadTasks();
+                          }
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        color: Colors.red[400],
+                        onPressed: () => _deleteTask(task),
+                      ),
+                    ],
+                  ),
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TaskEditPage(task: task),
+                      ),
+                    );
+                    // 編集画面から戻ってきたら、削除された可能性があるので一覧を再読み込み
+                    if (result == true) {
+                      _loadTasks();
+                    }
+                  },
+                ),
+              );
             },
           ),
           // リフレッシュ中のオーバーレイ
