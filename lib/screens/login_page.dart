@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/error_handler.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,6 +14,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _apiService = ApiService();
+  final _errorHandler = ErrorHandler();
   bool _isLoading = false;
   String? _emailError;
   String? _passwordError;
@@ -58,38 +60,26 @@ class _LoginPageState extends State<LoginPage> {
             (route) => false,
           );
         }
-      } on ApiException catch (e) {
-        // APIエラー時の処理
+      } catch (e) {
+        // エラー時の処理
         if (mounted) {
           // フィールドごとのエラーメッセージを設定
           setState(() {
-            _emailError = e.getFieldError('email');
-            _passwordError = e.getFieldError('password');
+            _emailError = _errorHandler.getFieldError(e, 'email');
+            _passwordError = _errorHandler.getFieldError(e, 'password');
           });
 
           // フィールドエラーがない場合は、一般的なエラーメッセージを表示
           if (_emailError == null && _passwordError == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(e.getErrorMessage()),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 5),
-              ),
+            _errorHandler.handleError(
+              context,
+              e,
+              contextMessage: 'ログイン',
             );
           } else {
             // フィールドエラーがある場合は、フォームを再検証してエラーを表示
             _formKey.currentState?.validate();
           }
-        }
-      } catch (e) {
-        // その他のエラー時の処理
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('ログインエラー: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
         }
       } finally {
         if (mounted) {

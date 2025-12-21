@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/error_handler.dart';
 import '../models/task.dart';
 
 class TaskEditPage extends StatefulWidget {
@@ -14,6 +15,7 @@ class TaskEditPage extends StatefulWidget {
 class _TaskEditPageState extends State<TaskEditPage> {
   final _formKey = GlobalKey<FormState>();
   final _apiService = ApiService();
+  final _errorHandler = ErrorHandler();
   late TextEditingController _titleController;
   late TextEditingController _memoController;
   late DateTime _selectedDate;
@@ -109,37 +111,25 @@ class _TaskEditPageState extends State<TaskEditPage> {
           );
           Navigator.pop(context, true); // trueを返して、呼び出し元でリフレッシュできるようにする
         }
-      } on ApiException catch (e) {
-        // APIエラー時の処理
+      } catch (e) {
+        // エラー時の処理
         if (mounted) {
           // フィールドごとのエラーメッセージを設定
           setState(() {
-            _titleError = e.getFieldError('title');
+            _titleError = _errorHandler.getFieldError(e, 'title');
           });
 
           // フィールドエラーがない場合は、一般的なエラーメッセージを表示
           if (_titleError == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(e.getErrorMessage()),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 5),
-              ),
+            _errorHandler.handleError(
+              context,
+              e,
+              contextMessage: '予定更新',
             );
           } else {
             // フィールドエラーがある場合は、フォームを再検証してエラーを表示
             _formKey.currentState?.validate();
           }
-        }
-      } catch (e) {
-        // その他のエラー時の処理
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('予定の更新に失敗しました: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
         }
       } finally {
         if (mounted) {
@@ -205,23 +195,12 @@ class _TaskEditPageState extends State<TaskEditPage> {
         );
         Navigator.pop(context, true); // trueを返して、呼び出し元でリフレッシュできるようにする
       }
-    } on ApiException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.getErrorMessage()),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('予定の削除に失敗しました: $e'),
-            backgroundColor: Colors.red,
-          ),
+        _errorHandler.handleError(
+          context,
+          e,
+          contextMessage: '予定削除（編集画面）',
         );
       }
     } finally {
