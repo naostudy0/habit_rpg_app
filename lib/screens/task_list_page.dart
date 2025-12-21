@@ -6,6 +6,14 @@ import '../services/loading_service.dart';
 import '../widgets/loading_widget.dart';
 import '../models/task.dart';
 
+// 並び替えタイプの列挙型
+enum TaskSortType {
+  dateAscending,        // 日付順
+  createdAtAscending,   // 作成日順
+  titleAscending,       // タイトル順
+  completionStatus,     // 完了状態
+}
+
 class TaskListPage extends StatefulWidget {
   const TaskListPage({super.key});
 
@@ -29,6 +37,10 @@ class _TaskListPageState extends State<TaskListPage> {
   DateTime? _endDate;
   bool? _completionFilter; // null: すべて, true: 完了のみ, false: 未完了のみ
   bool _showFilters = false;
+
+  // 並び替え用の状態
+  TaskSortType _sortType = TaskSortType.dateAscending;
+  bool _sortAscending = true;
 
   static const String _loadingOperation = 'load_tasks';
   static const String _loadingOperationDelete = 'delete_task';
@@ -203,7 +215,7 @@ class _TaskListPageState extends State<TaskListPage> {
   // 検索・フィルタリングを適用
   void _applyFilters() {
     setState(() {
-      _filteredTasks = _tasks.where((task) {
+      List<Task> filtered = _tasks.where((task) {
         // 検索キーワードでフィルタリング（タイトル・メモ）
         final searchQuery = _searchController.text.toLowerCase().trim();
         if (searchQuery.isNotEmpty) {
@@ -256,7 +268,78 @@ class _TaskListPageState extends State<TaskListPage> {
 
         return true;
       }).toList();
+
+      // 並び替えを適用
+      _filteredTasks = _sortTasks(filtered);
     });
+  }
+
+  // タスクを並び替え
+  List<Task> _sortTasks(List<Task> tasks) {
+    final sorted = List<Task>.from(tasks);
+
+    switch (_sortType) {
+      case TaskSortType.dateAscending:
+        sorted.sort((a, b) {
+          final dateA = DateTime(
+            a.scheduledDate.year,
+            a.scheduledDate.month,
+            a.scheduledDate.day,
+            a.scheduledTime.hour,
+            a.scheduledTime.minute,
+          );
+          final dateB = DateTime(
+            b.scheduledDate.year,
+            b.scheduledDate.month,
+            b.scheduledDate.day,
+            b.scheduledTime.hour,
+            b.scheduledTime.minute,
+          );
+          return _sortAscending
+              ? dateA.compareTo(dateB)
+              : dateB.compareTo(dateA);
+        });
+        break;
+      case TaskSortType.createdAtAscending:
+        sorted.sort((a, b) {
+          return _sortAscending
+              ? a.createdAt.compareTo(b.createdAt)
+              : b.createdAt.compareTo(a.createdAt);
+        });
+        break;
+      case TaskSortType.titleAscending:
+        sorted.sort((a, b) {
+          final comparison = a.title.compareTo(b.title);
+          return _sortAscending ? comparison : -comparison;
+        });
+        break;
+      case TaskSortType.completionStatus:
+        sorted.sort((a, b) {
+          // 未完了を先に、完了を後に
+          if (a.isCompleted == b.isCompleted) {
+            // 同じ状態の場合は日付順
+            final dateA = DateTime(
+              a.scheduledDate.year,
+              a.scheduledDate.month,
+              a.scheduledDate.day,
+              a.scheduledTime.hour,
+              a.scheduledTime.minute,
+            );
+            final dateB = DateTime(
+              b.scheduledDate.year,
+              b.scheduledDate.month,
+              b.scheduledDate.day,
+              b.scheduledTime.hour,
+              b.scheduledTime.minute,
+            );
+            return dateA.compareTo(dateB);
+          }
+          return a.isCompleted ? 1 : -1;
+        });
+        break;
+    }
+
+    return sorted;
   }
 
   // フィルターをリセット
@@ -315,6 +398,117 @@ class _TaskListPageState extends State<TaskListPage> {
             onPressed: () => Navigator.pop(context),
           ),
           actions: [
+            // 並び替えボタン
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.sort),
+              tooltip: '並び替え',
+              onSelected: (value) {
+                setState(() {
+                  switch (value) {
+                    case 'date_asc':
+                      _sortType = TaskSortType.dateAscending;
+                      _sortAscending = true;
+                      break;
+                    case 'date_desc':
+                      _sortType = TaskSortType.dateAscending;
+                      _sortAscending = false;
+                      break;
+                    case 'created_asc':
+                      _sortType = TaskSortType.createdAtAscending;
+                      _sortAscending = true;
+                      break;
+                    case 'created_desc':
+                      _sortType = TaskSortType.createdAtAscending;
+                      _sortAscending = false;
+                      break;
+                    case 'title_asc':
+                      _sortType = TaskSortType.titleAscending;
+                      _sortAscending = true;
+                      break;
+                    case 'title_desc':
+                      _sortType = TaskSortType.titleAscending;
+                      _sortAscending = false;
+                      break;
+                    case 'completion':
+                      _sortType = TaskSortType.completionStatus;
+                      break;
+                  }
+                });
+                _applyFilters();
+              },
+              itemBuilder: (BuildContext context) => [
+                const PopupMenuItem<String>(
+                  value: 'date_asc',
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 20),
+                      SizedBox(width: 8),
+                      Text('日付順（昇順）'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'date_desc',
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 20),
+                      SizedBox(width: 8),
+                      Text('日付順（降順）'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'created_asc',
+                  child: Row(
+                    children: [
+                      Icon(Icons.access_time, size: 20),
+                      SizedBox(width: 8),
+                      Text('作成日順（昇順）'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'created_desc',
+                  child: Row(
+                    children: [
+                      Icon(Icons.access_time, size: 20),
+                      SizedBox(width: 8),
+                      Text('作成日順（降順）'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'title_asc',
+                  child: Row(
+                    children: [
+                      Icon(Icons.sort_by_alpha, size: 20),
+                      SizedBox(width: 8),
+                      Text('タイトル順（あいうえお）'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'title_desc',
+                  child: Row(
+                    children: [
+                      Icon(Icons.sort_by_alpha, size: 20),
+                      SizedBox(width: 8),
+                      Text('タイトル順（逆順）'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'completion',
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle_outline, size: 20),
+                      SizedBox(width: 8),
+                      Text('完了状態'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             IconButton(
               icon: Icon(_showFilters ? Icons.filter_alt : Icons.filter_alt_outlined),
               onPressed: () {
