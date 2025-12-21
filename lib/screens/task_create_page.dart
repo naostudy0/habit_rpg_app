@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/error_handler.dart';
 import '../services/loading_service.dart';
+import '../services/settings_service.dart';
 import '../widgets/loading_widget.dart';
+import '../utils/time_formatter.dart';
 
 class TaskCreatePage extends StatefulWidget {
   final DateTime? initialDate;
@@ -20,6 +22,7 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
   final _apiService = ApiService();
   final _errorHandler = ErrorHandler();
   final _loadingService = LoadingService();
+  final _settingsService = SettingsService();
   late DateTime _selectedDate;
   TimeOfDay _selectedTime = TimeOfDay.now();
   String? _titleError;
@@ -30,13 +33,21 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
   void initState() {
     super.initState();
     _selectedDate = widget.initialDate ?? DateTime.now();
+    _settingsService.addListener(_onSettingsChanged);
   }
 
   @override
   void dispose() {
+    _settingsService.removeListener(_onSettingsChanged);
     _titleController.dispose();
     _memoController.dispose();
     super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -57,6 +68,14 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
+      builder: (BuildContext context, Widget? child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            alwaysUse24HourFormat: _settingsService.is24HourFormat,
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null && picked != _selectedTime) {
       setState(() {
@@ -250,7 +269,7 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
                             const Icon(Icons.access_time, color: Colors.grey),
                             const SizedBox(width: 8),
                             Text(
-                              '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
+                              TimeFormatter.formatTime(_selectedTime),
                               style: const TextStyle(fontSize: 16),
                             ),
                           ],

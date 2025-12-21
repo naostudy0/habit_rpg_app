@@ -5,8 +5,10 @@ import 'task_edit_page.dart';
 import '../services/api_service.dart';
 import '../services/error_handler.dart';
 import '../services/loading_service.dart';
+import '../services/settings_service.dart';
 import '../widgets/loading_widget.dart';
 import '../models/task.dart';
+import '../utils/time_formatter.dart';
 
 class TaskCalendarPage extends StatefulWidget {
   const TaskCalendarPage({super.key});
@@ -19,6 +21,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
   final ApiService _apiService = ApiService();
   final ErrorHandler _errorHandler = ErrorHandler();
   final LoadingService _loadingService = LoadingService();
+  final SettingsService _settingsService = SettingsService();
   List<Task> _tasks = [];
   List<Task> _filteredTasks = [];
   bool _isInitialLoading = true;
@@ -37,7 +40,20 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
   void initState() {
     super.initState();
     _completingTaskUuids.clear();
+    _settingsService.addListener(_onSettingsChanged);
     _loadTasks();
+  }
+
+  @override
+  void dispose() {
+    _settingsService.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   // 予定一覧を取得
@@ -519,8 +535,35 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
       onRefresh: _loadTasks,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: selectedTasks.length,
+        itemCount: selectedTasks.length + 1, // 追加ボタン用に+1
         itemBuilder: (context, index) {
+          // 最後のアイテムは追加ボタン
+          if (index == selectedTasks.length) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TaskCreatePage(
+                        initialDate: _selectedDay,
+                      ),
+                    ),
+                  );
+                  if (result == true) {
+                    _loadTasks();
+                  }
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('予定を追加'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            );
+          }
+
           final task = selectedTasks[index];
 
           // Taskオブジェクトの型チェック
@@ -594,7 +637,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${task.scheduledTime.hour.toString().padLeft(2, '0')}:${task.scheduledTime.minute.toString().padLeft(2, '0')}',
+                        TimeFormatter.formatTime(task.scheduledTime),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],

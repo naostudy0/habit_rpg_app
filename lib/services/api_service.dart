@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/environment.dart';
 import '../models/task.dart';
+import '../models/user.dart';
 import 'auth_service.dart';
 
 // APIエラークラス
@@ -454,6 +455,134 @@ class ApiService {
     } catch (e) {
       if (e is FormatException) {
         // JSONパースエラーの場合
+        throw ApiException(
+          statusCode: 0,
+          message: 'サーバーからの応答を解析できませんでした',
+          errors: null,
+        );
+      }
+      throw ApiException(
+        statusCode: 0,
+        message: 'ネットワークエラー: $e',
+        errors: null,
+      );
+    }
+  }
+
+  // ユーザー情報を取得
+  Future<User> getUser() async {
+    try {
+      final headers = await _headers;
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/user'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        final userData = responseData['data'] ?? responseData;
+        return User.fromJson(userData as Map<String, dynamic>);
+      } else {
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: errorData['message'] as String? ?? 'ユーザー情報の取得に失敗しました',
+          errors: errorData['errors'] as Map<String, dynamic>?,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      if (e is FormatException) {
+        throw ApiException(
+          statusCode: 0,
+          message: 'サーバーからの応答を解析できませんでした',
+          errors: null,
+        );
+      }
+      throw ApiException(
+        statusCode: 0,
+        message: 'ネットワークエラー: $e',
+        errors: null,
+      );
+    }
+  }
+
+  // ユーザー情報を更新
+  Future<User> updateUser({
+    String? name,
+    String? email,
+    String? password,
+    bool? isDarkMode,
+    bool? is24HourFormat,
+  }) async {
+    try {
+      final headers = await _headers;
+      final body = <String, dynamic>{};
+
+      if (name != null) body['name'] = name;
+      if (email != null) body['email'] = email;
+      if (password != null) body['password'] = password;
+      if (isDarkMode != null) body['is_dark_mode'] = isDarkMode;
+      if (is24HourFormat != null) body['is_24_hour_format'] = is24HourFormat;
+
+      final response = await http.put(
+        Uri.parse('$_baseUrl/api/user'),
+        headers: headers,
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        final userData = responseData['data'] ?? responseData;
+        return User.fromJson(userData as Map<String, dynamic>);
+      } else {
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: errorData['message'] as String? ?? 'ユーザー情報の更新に失敗しました',
+          errors: errorData['errors'] as Map<String, dynamic>?,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      if (e is FormatException) {
+        throw ApiException(
+          statusCode: 0,
+          message: 'サーバーからの応答を解析できませんでした',
+          errors: null,
+        );
+      }
+      throw ApiException(
+        statusCode: 0,
+        message: 'ネットワークエラー: $e',
+        errors: null,
+      );
+    }
+  }
+
+  // アカウント削除
+  Future<void> deleteAccount() async {
+    try {
+      final headers = await _headers;
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/api/user'),
+        headers: headers,
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: errorData['message'] as String? ?? 'アカウントの削除に失敗しました',
+          errors: errorData['errors'] as Map<String, dynamic>?,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      if (e is FormatException) {
         throw ApiException(
           statusCode: 0,
           message: 'サーバーからの応答を解析できませんでした',
