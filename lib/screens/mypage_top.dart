@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'task_create_page.dart';
 import 'task_list_page.dart';
+import 'task_calendar_page.dart';
 import 'settings_page.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
@@ -227,6 +228,43 @@ class _MyPageTopState extends State<MyPageTop> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const TaskListPage(),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // カレンダーボタン
+            Card(
+              elevation: 4,
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[400],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_today,
+                    color: Colors.white,
+                  ),
+                ),
+                title: const Text(
+                  'カレンダー',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: const Text('予定をカレンダー形式で確認'),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TaskCalendarPage(),
                     ),
                   );
                 },

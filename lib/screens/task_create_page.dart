@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class TaskCreatePage extends StatefulWidget {
-  const TaskCreatePage({super.key});
+  final DateTime? initialDate;
+
+  const TaskCreatePage({super.key, this.initialDate});
 
   @override
   State<TaskCreatePage> createState() => _TaskCreatePageState();
@@ -13,10 +15,16 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
   final _titleController = TextEditingController();
   final _memoController = TextEditingController();
   final _apiService = ApiService();
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   TimeOfDay _selectedTime = TimeOfDay.now();
   bool _isLoading = false;
   String? _titleError;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.initialDate ?? DateTime.now();
+  }
 
   @override
   void dispose() {
