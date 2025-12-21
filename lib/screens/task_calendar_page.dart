@@ -20,12 +20,16 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
   final ErrorHandler _errorHandler = ErrorHandler();
   final LoadingService _loadingService = LoadingService();
   List<Task> _tasks = [];
+  List<Task> _filteredTasks = [];
   bool _isInitialLoading = true;
   String? _errorMessage;
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   Map<DateTime, List<Task>> _events = {};
   final Set<String> _completingTaskUuids = {}; // 完了状態切り替え中のタスクUUID
+
+  // 完了状態フィルター
+  bool? _completionFilter; // null: すべて, true: 完了のみ, false: 未完了のみ
 
   static const String _loadingOperation = 'load_tasks';
 
@@ -47,9 +51,9 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
       final tasks = await _apiService.getTasks();
       setState(() {
         _tasks = tasks;
-        _events = _groupTasksByDate(tasks);
         _isInitialLoading = false;
       });
+      _applyFilters();
     } catch (e) {
       setState(() {
         _errorMessage = _errorHandler.getErrorMessage(e);
@@ -59,6 +63,22 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
     } finally {
       _loadingService.setLoading(_loadingOperation, false);
     }
+  }
+
+  // フィルタリングを適用
+  void _applyFilters() {
+    setState(() {
+      // 完了状態でフィルタリング
+      _filteredTasks = _tasks.where((task) {
+        if (_completionFilter != null) {
+          return task.isCompleted == _completionFilter;
+        }
+        return true;
+      }).toList();
+
+      // フィルタリング後のタスクを日付ごとにグループ化
+      _events = _groupTasksByDate(_filteredTasks);
+    });
   }
 
   // 予定を日付ごとにグループ化
@@ -109,9 +129,9 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
         if (index != -1) {
           _tasks[index] = updatedTask;
         }
-        _events = _groupTasksByDate(_tasks);
         _completingTaskUuids.remove(task.uuid);
       });
+      _applyFilters();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -209,6 +229,78 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
             onPressed: () => Navigator.pop(context),
           ),
           actions: [
+            // 完了状態フィルターボタン
+            PopupMenuButton<String>(
+              icon: Icon(
+                _completionFilter == null
+                    ? Icons.filter_alt_outlined
+                    : Icons.filter_alt,
+                color: _completionFilter == null ? null : Theme.of(context).colorScheme.primary,
+              ),
+              tooltip: 'フィルター',
+              onSelected: (value) {
+                setState(() {
+                  if (value == 'all') {
+                    _completionFilter = null;
+                  } else if (value == 'completed') {
+                    _completionFilter = true;
+                  } else if (value == 'incomplete') {
+                    _completionFilter = false;
+                  }
+                });
+                _applyFilters();
+              },
+              itemBuilder: (BuildContext context) => [
+                PopupMenuItem<String>(
+                  value: 'all',
+                  child: Row(
+                    children: [
+                      Icon(
+                        _completionFilter == null ? Icons.check : Icons.radio_button_unchecked,
+                        size: 20,
+                        color: _completionFilter == null
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('すべて'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'incomplete',
+                  child: Row(
+                    children: [
+                      Icon(
+                        _completionFilter == false ? Icons.check : Icons.radio_button_unchecked,
+                        size: 20,
+                        color: _completionFilter == false
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('未完了'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'completed',
+                  child: Row(
+                    children: [
+                      Icon(
+                        _completionFilter == true ? Icons.check : Icons.radio_button_unchecked,
+                        size: 20,
+                        color: _completionFilter == true
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('完了'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () async {
@@ -277,6 +369,41 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
               onPressed: _loadTasks,
               icon: const Icon(Icons.refresh),
               label: const Text('再試行'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // フィルタリング後の結果が空の場合
+    if (_filteredTasks.isEmpty && _tasks.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.filter_alt_off,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'フィルター条件に一致する予定がありません',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _completionFilter = null;
+                });
+                _applyFilters();
+              },
+              child: const Text('フィルターをリセット'),
             ),
           ],
         ),
