@@ -16,6 +16,7 @@ class _TaskListPageState extends State<TaskListPage> {
   bool _isLoading = false;
   bool _isInitialLoading = true;
   String? _errorMessage;
+  final Set<String> _completingTaskUuids = {}; // 完了状態切り替え中のタスクUUID
 
   @override
   void initState() {
@@ -49,6 +50,68 @@ class _TaskListPageState extends State<TaskListPage> {
   // プルリフレッシュ
   Future<void> _handleRefresh() async {
     await _loadTasks();
+  }
+
+  // 予定完了状態切り替え
+  Future<void> _toggleTaskCompletion(Task task) async {
+    final newCompletionState = !task.isCompleted;
+
+    setState(() {
+      _completingTaskUuids.add(task.uuid);
+    });
+
+    try {
+      final updatedTask = await _apiService.toggleTaskCompletion(
+        uuid: task.uuid,
+        isCompleted: newCompletionState,
+      );
+
+      // タスクリストを更新
+      setState(() {
+        final index = _tasks.indexWhere((t) => t.uuid == task.uuid);
+        if (index != -1) {
+          _tasks[index] = updatedTask;
+        }
+        _completingTaskUuids.remove(task.uuid);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newCompletionState ? '予定を完了にしました' : '予定を未完了にしました',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      setState(() {
+        _completingTaskUuids.remove(task.uuid);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.getErrorMessage()),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _completingTaskUuids.remove(task.uuid);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('予定の完了状態の切り替えに失敗しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // 予定削除
@@ -257,26 +320,43 @@ class _TaskListPageState extends State<TaskListPage> {
             itemBuilder: (context, index) {
               final task = _tasks[index];
 
+              final isCompleting = _completingTaskUuids.contains(task.uuid);
+
               return Card(
                 key: Key(task.uuid),
                 margin: const EdgeInsets.only(bottom: 12),
                 elevation: 2,
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
-                  leading: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: task.isCompleted
-                          ? Colors.green.withOpacity(0.2)
-                          : Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Icon(
-                      task.isCompleted ? Icons.check : Icons.schedule,
-                      color: task.isCompleted
-                          ? Colors.green
-                          : Theme.of(context).colorScheme.primary,
+                  leading: GestureDetector(
+                    onTap: isCompleting ? null : () => _toggleTaskCompletion(task),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: task.isCompleted
+                            ? Colors.green.withOpacity(0.2)
+                            : Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: isCompleting
+                          ? const Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
+                              color: task.isCompleted
+                                  ? Colors.green
+                                  : Theme.of(context).colorScheme.primary,
+                              size: 28,
+                            ),
                     ),
                   ),
                   title: Text(
@@ -344,7 +424,7 @@ class _TaskListPageState extends State<TaskListPage> {
                       IconButton(
                         icon: const Icon(Icons.edit),
                         color: Colors.grey[600],
-                        onPressed: () async {
+                        onPressed: isCompleting ? null : () async {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -360,11 +440,11 @@ class _TaskListPageState extends State<TaskListPage> {
                       IconButton(
                         icon: const Icon(Icons.delete),
                         color: Colors.red[400],
-                        onPressed: () => _deleteTask(task),
+                        onPressed: isCompleting ? null : () => _deleteTask(task),
                       ),
                     ],
                   ),
-                  onTap: () async {
+                  onTap: isCompleting ? null : () async {
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
