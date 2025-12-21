@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../services/error_handler.dart';
 import '../services/loading_service.dart';
 import '../services/settings_service.dart';
@@ -15,6 +16,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final ApiService _apiService = ApiService();
+  final AuthService _authService = AuthService();
   final ErrorHandler _errorHandler = ErrorHandler();
   final LoadingService _loadingService = LoadingService();
   final SettingsService _settingsService = SettingsService();
@@ -133,6 +135,9 @@ class _SettingsPageState extends State<SettingsPage> {
         _user = updatedUser;
       });
 
+      // AuthServiceのユーザー情報も更新
+      await _authService.saveUserInfo(updatedUser.name, updatedUser.email);
+
       _passwordController.clear();
       _passwordConfirmController.clear();
 
@@ -143,6 +148,8 @@ class _SettingsPageState extends State<SettingsPage> {
             backgroundColor: Colors.green,
           ),
         );
+        // 更新成功を呼び出し元に通知
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
