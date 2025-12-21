@@ -18,9 +18,17 @@ class _TaskListPageState extends State<TaskListPage> {
   final ErrorHandler _errorHandler = ErrorHandler();
   final LoadingService _loadingService = LoadingService();
   List<Task> _tasks = [];
+  List<Task> _filteredTasks = [];
   bool _isInitialLoading = true;
   String? _errorMessage;
   final Set<String> _completingTaskUuids = {}; // 完了状態切り替え中のタスクUUID
+
+  // 検索・フィルタリング用の状態
+  final TextEditingController _searchController = TextEditingController();
+  DateTime? _startDate;
+  DateTime? _endDate;
+  bool? _completionFilter; // null: すべて, true: 完了のみ, false: 未完了のみ
+  bool _showFilters = false;
 
   static const String _loadingOperation = 'load_tasks';
   static const String _loadingOperationDelete = 'delete_task';
@@ -28,7 +36,14 @@ class _TaskListPageState extends State<TaskListPage> {
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_applyFilters);
     _loadTasks();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   // 予定一覧を取得
@@ -44,6 +59,8 @@ class _TaskListPageState extends State<TaskListPage> {
         _tasks = tasks;
         _isInitialLoading = false;
       });
+      // フィルタリングを適用（初期状態ではすべて表示）
+      _applyFilters();
     } catch (e) {
       setState(() {
         _errorMessage = _errorHandler.getErrorMessage(e);
@@ -82,6 +99,7 @@ class _TaskListPageState extends State<TaskListPage> {
         }
         _completingTaskUuids.remove(task.uuid);
       });
+      _applyFilters();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -157,6 +175,7 @@ class _TaskListPageState extends State<TaskListPage> {
       await _apiService.deleteTask(taskUuid);
       // 削除成功後、一覧を再読み込み
       await _loadTasks();
+      // _loadTasks内で_applyFiltersが呼ばれるので、ここでは不要
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -181,6 +200,108 @@ class _TaskListPageState extends State<TaskListPage> {
     }
   }
 
+  // 検索・フィルタリングを適用
+  void _applyFilters() {
+    setState(() {
+      _filteredTasks = _tasks.where((task) {
+        // 検索キーワードでフィルタリング（タイトル・メモ）
+        final searchQuery = _searchController.text.toLowerCase().trim();
+        if (searchQuery.isNotEmpty) {
+          final titleMatch = task.title.toLowerCase().contains(searchQuery);
+          final memoMatch = task.memo?.toLowerCase().contains(searchQuery) ?? false;
+          if (!titleMatch && !memoMatch) {
+            return false;
+          }
+        }
+
+        // 完了状態でフィルタリング
+        if (_completionFilter != null) {
+          if (task.isCompleted != _completionFilter) {
+            return false;
+          }
+        }
+
+        // 日付範囲でフィルタリング
+        if (_startDate != null) {
+          final taskDate = DateTime(
+            task.scheduledDate.year,
+            task.scheduledDate.month,
+            task.scheduledDate.day,
+          );
+          final startDate = DateTime(
+            _startDate!.year,
+            _startDate!.month,
+            _startDate!.day,
+          );
+          if (taskDate.isBefore(startDate)) {
+            return false;
+          }
+        }
+
+        if (_endDate != null) {
+          final taskDate = DateTime(
+            task.scheduledDate.year,
+            task.scheduledDate.month,
+            task.scheduledDate.day,
+          );
+          final endDate = DateTime(
+            _endDate!.year,
+            _endDate!.month,
+            _endDate!.day,
+          );
+          if (taskDate.isAfter(endDate)) {
+            return false;
+          }
+        }
+
+        return true;
+      }).toList();
+    });
+  }
+
+  // フィルターをリセット
+  void _resetFilters() {
+    setState(() {
+      _searchController.clear();
+      _startDate = null;
+      _endDate = null;
+      _completionFilter = null;
+      _showFilters = false;
+    });
+    _applyFilters();
+  }
+
+  // 開始日を選択
+  Future<void> _selectStartDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null) {
+      setState(() {
+        _startDate = picked;
+      });
+      _applyFilters();
+    }
+  }
+
+  // 終了日を選択
+  Future<void> _selectEndDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _endDate ?? DateTime.now(),
+      firstDate: _startDate ?? DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null) {
+      setState(() {
+        _endDate = picked;
+      });
+      _applyFilters();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -193,8 +314,220 @@ class _TaskListPageState extends State<TaskListPage> {
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
           ),
+          actions: [
+            IconButton(
+              icon: Icon(_showFilters ? Icons.filter_alt : Icons.filter_alt_outlined),
+              onPressed: () {
+                setState(() {
+                  _showFilters = !_showFilters;
+                });
+              },
+              tooltip: 'フィルター',
+            ),
+          ],
         ),
-        body: _buildBody(),
+        body: Column(
+          children: [
+            // 検索バー
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'タイトル・メモで検索',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            _applyFilters();
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+              ),
+            ),
+            // フィルターUI
+            if (_showFilters)
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey[300]!),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'フィルター',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: _resetFilters,
+                          child: const Text('リセット'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // 完了状態フィルター
+                    Row(
+                      children: [
+                        const Text('状態: '),
+                        const SizedBox(width: 8),
+                        ChoiceChip(
+                          label: const Text('すべて'),
+                          selected: _completionFilter == null,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _completionFilter = null;
+                              });
+                              _applyFilters();
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        ChoiceChip(
+                          label: const Text('未完了'),
+                          selected: _completionFilter == false,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _completionFilter = false;
+                              });
+                              _applyFilters();
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        ChoiceChip(
+                          label: const Text('完了'),
+                          selected: _completionFilter == true,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _completionFilter = true;
+                              });
+                              _applyFilters();
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // 日付範囲フィルター
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _selectStartDate(context),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.white,
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _startDate == null
+                                          ? '開始日'
+                                          : '${_startDate!.year}/${_startDate!.month}/${_startDate!.day}',
+                                      style: TextStyle(
+                                        color: _startDate == null ? Colors.grey[600] : Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                  if (_startDate != null)
+                                    IconButton(
+                                      icon: const Icon(Icons.clear, size: 18),
+                                      onPressed: () {
+                                        setState(() {
+                                          _startDate = null;
+                                        });
+                                        _applyFilters();
+                                      },
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('〜'),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _selectEndDate(context),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.white,
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _endDate == null
+                                          ? '終了日'
+                                          : '${_endDate!.year}/${_endDate!.month}/${_endDate!.day}',
+                                      style: TextStyle(
+                                        color: _endDate == null ? Colors.grey[600] : Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                  if (_endDate != null)
+                                    IconButton(
+                                      icon: const Icon(Icons.clear, size: 18),
+                                      onPressed: () {
+                                        setState(() {
+                                          _endDate = null;
+                                        });
+                                        _applyFilters();
+                                      },
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            // メインコンテンツ
+            Expanded(
+              child: _buildBody(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -291,14 +624,52 @@ class _TaskListPageState extends State<TaskListPage> {
       );
     }
 
+    // フィルタリング後の結果が空の場合
+    if (_filteredTasks.isEmpty && _tasks.isNotEmpty) {
+      return RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 300,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search_off,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '検索条件に一致する予定がありません',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: _resetFilters,
+                    child: const Text('フィルターをリセット'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     // 予定一覧表示
     return RefreshIndicator(
       onRefresh: _handleRefresh,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: _tasks.length,
+        itemCount: _filteredTasks.length,
         itemBuilder: (context, index) {
-          final task = _tasks[index];
+          final task = _filteredTasks[index];
 
           final isCompleting = _completingTaskUuids.contains(task.uuid);
 
