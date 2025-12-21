@@ -79,11 +79,14 @@ class _MyPageTopState extends State<MyPageTop> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // TODO: 設定ページへの遷移
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('設定ページへ遷移予定')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsPage(),
+                ),
               );
             },
+            tooltip: '設定',
           ),
         ],
       ),

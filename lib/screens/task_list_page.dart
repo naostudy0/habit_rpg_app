@@ -3,8 +3,10 @@ import 'task_edit_page.dart';
 import '../services/api_service.dart';
 import '../services/error_handler.dart';
 import '../services/loading_service.dart';
+import '../services/settings_service.dart';
 import '../widgets/loading_widget.dart';
 import '../models/task.dart';
+import '../utils/time_formatter.dart';
 
 // 並び替えタイプの列挙型
 enum TaskSortType {
@@ -25,6 +27,7 @@ class _TaskListPageState extends State<TaskListPage> {
   final ApiService _apiService = ApiService();
   final ErrorHandler _errorHandler = ErrorHandler();
   final LoadingService _loadingService = LoadingService();
+  final SettingsService _settingsService = SettingsService();
   List<Task> _tasks = [];
   List<Task> _filteredTasks = [];
   bool _isInitialLoading = true;
@@ -49,13 +52,21 @@ class _TaskListPageState extends State<TaskListPage> {
   void initState() {
     super.initState();
     _searchController.addListener(_applyFilters);
+    _settingsService.addListener(_onSettingsChanged);
     _loadTasks();
   }
 
   @override
   void dispose() {
+    _settingsService.removeListener(_onSettingsChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   // 予定一覧を取得
@@ -941,7 +952,7 @@ class _TaskListPageState extends State<TaskListPage> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${task.scheduledTime.hour.toString().padLeft(2, '0')}:${task.scheduledTime.minute.toString().padLeft(2, '0')}',
+                        TimeFormatter.formatTime(task.scheduledTime),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
