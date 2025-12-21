@@ -40,6 +40,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
   void initState() {
     super.initState();
     _completingTaskUuids.clear();
+    _settingsService.initialize();
     _settingsService.addListener(_onSettingsChanged);
     _loadTasks();
   }

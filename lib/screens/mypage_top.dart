@@ -78,13 +78,20 @@ class _MyPageTopState extends State<MyPageTop> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const SettingsPage(),
                 ),
               );
+              // 設定ページで名前が更新された場合は、ユーザー名を再取得
+              if (result == true && mounted) {
+                final userName = await _authService.getUserName();
+                setState(() {
+                  _userName = userName ?? 'ユーザー';
+                });
+              }
             },
             tooltip: '設定',
           ),
@@ -300,13 +307,20 @@ class _MyPageTopState extends State<MyPageTop> {
                 ),
                 subtitle: const Text('アプリの設定を変更'),
                 trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const SettingsPage(),
                     ),
                   );
+                  // 設定ページで名前が更新された場合は、ユーザー名を再取得
+                  if (result == true && mounted) {
+                    final userName = await _authService.getUserName();
+                    setState(() {
+                      _userName = userName ?? 'ユーザー';
+                    });
+                  }
                 },
               ),
             ),

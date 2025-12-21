@@ -3,11 +3,10 @@ import '../services/settings_service.dart';
 
 /// 時刻フォーマット用のユーティリティクラス
 class TimeFormatter {
-  static final SettingsService _settingsService = SettingsService();
-
   /// TimeOfDayを文字列にフォーマット（24時間形式設定に基づく）
   static String formatTime(TimeOfDay time) {
-    final is24Hour = _settingsService.is24HourFormat;
+    final settingsService = SettingsService();
+    final is24Hour = settingsService.is24HourFormat;
 
     if (is24Hour) {
       // 24時間形式
