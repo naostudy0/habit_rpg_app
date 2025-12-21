@@ -3,6 +3,7 @@ import 'task_list_page.dart';
 import 'task_create_page.dart';
 import 'task_edit_page.dart';
 import '../services/api_service.dart';
+import '../models/task.dart';
 
 class TaskCalendarPage extends StatefulWidget {
   const TaskCalendarPage({super.key});
@@ -13,13 +14,13 @@ class TaskCalendarPage extends StatefulWidget {
 
 class _TaskCalendarPageState extends State<TaskCalendarPage> {
   final ApiService _apiService = ApiService();
-  List<Map<String, dynamic>> _tasks = [];
+  List<Task> _tasks = [];
   bool _isLoading = false;
   bool _isInitialLoading = true;
   String? _errorMessage;
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
-  Map<DateTime, List<Map<String, dynamic>>> _events = {};
+  Map<DateTime, List<Task>> _events = {};
 
   @override
   void initState() {
@@ -52,82 +53,27 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
   }
 
   // 予定を日付ごとにグループ化
-  Map<DateTime, List<Map<String, dynamic>>> _groupTasksByDate(
-      List<Map<String, dynamic>> tasks) {
-    final Map<DateTime, List<Map<String, dynamic>>> grouped = {};
+  Map<DateTime, List<Task>> _groupTasksByDate(List<Task> tasks) {
+    final Map<DateTime, List<Task>> grouped = {};
 
     for (final task in tasks) {
-      final dateStr = task['scheduled_date'] ?? task['date'] ?? task['scheduled_at'];
-      if (dateStr == null) continue;
-
-      DateTime? taskDate;
-      if (dateStr is DateTime) {
-        taskDate = dateStr;
-      } else if (dateStr is String) {
-        try {
-          // YYYY-MM-DD形式またはISO8601形式をパース
-          final dateOnly = dateStr.split('T')[0].split(' ')[0];
-          final parts = dateOnly.split('-');
-          if (parts.length == 3) {
-            taskDate = DateTime(
-              int.parse(parts[0]),
-              int.parse(parts[1]),
-              int.parse(parts[2]),
-            );
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-
-      if (taskDate != null) {
-        final dateKey = DateTime(taskDate.year, taskDate.month, taskDate.day);
-        grouped.putIfAbsent(dateKey, () => []).add(task);
-      }
+      final dateKey = DateTime(
+        task.scheduledDate.year,
+        task.scheduledDate.month,
+        task.scheduledDate.day,
+      );
+      grouped.putIfAbsent(dateKey, () => []).add(task);
     }
 
     return grouped;
   }
 
-  // 日付文字列をDateTimeに変換
-  DateTime? _parseDate(dynamic dateValue) {
-    if (dateValue == null) return null;
-    if (dateValue is DateTime) return dateValue;
-    if (dateValue is String) {
-      try {
-        final dateOnly = dateValue.split('T')[0].split(' ')[0];
-        return DateTime.parse(dateOnly);
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  // 時刻文字列をTimeOfDayに変換
-  TimeOfDay? _parseTime(dynamic timeValue) {
-    if (timeValue == null) return null;
-    if (timeValue is TimeOfDay) return timeValue;
-    if (timeValue is String) {
-      try {
-        final parts = timeValue.split(':');
-        if (parts.length >= 2) {
-          return TimeOfDay(
-            hour: int.parse(parts[0]),
-            minute: int.parse(parts[1]),
-          );
-        }
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  }
-
   // 選択された日の予定を取得
-  List<Map<String, dynamic>> _getSelectedDayTasks() {
+  List<Task> _getSelectedDayTasks() {
     final dateKey = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
-    return _events[dateKey] ?? [];
+    final tasks = _events[dateKey] ?? [];
+    // Taskオブジェクトのみを返すようにフィルタリング
+    return tasks.whereType<Task>().toList();
   }
 
   // カレンダーの日付ビルダー
@@ -385,11 +331,11 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
         itemCount: selectedTasks.length,
         itemBuilder: (context, index) {
           final task = selectedTasks[index];
-          final taskDate = _parseDate(task['scheduled_date'] ?? task['date'] ?? task['scheduled_at']);
-          final taskTime = _parseTime(task['time'] ?? task['scheduled_time']);
-          final isCompleted = task['is_completed'] ?? task['isCompleted'] ?? false;
-          final title = task['title'] ?? task['name'] ?? 'タイトルなし';
-          final memo = task['memo'] ?? task['description'] ?? '';
+
+          // Taskオブジェクトの型チェック
+          if (task is! Task) {
+            return const SizedBox.shrink();
+          }
 
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -400,24 +346,24 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: isCompleted
+                  color: task.isCompleted
                       ? Colors.green.withOpacity(0.2)
                       : Theme.of(context).colorScheme.primary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: Icon(
-                  isCompleted ? Icons.check : Icons.schedule,
-                  color: isCompleted
+                  task.isCompleted ? Icons.check : Icons.schedule,
+                  color: task.isCompleted
                       ? Colors.green
                       : Theme.of(context).colorScheme.primary,
                 ),
               ),
               title: Text(
-                title,
+                task.title,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  decoration: isCompleted
+                  decoration: task.isCompleted
                       ? TextDecoration.lineThrough
                       : null,
                 ),
@@ -426,28 +372,27 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
-                  if (taskTime != null)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: 14,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${task.scheduledTime.hour.toString().padLeft(2, '0')}:${task.scheduledTime.minute.toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                          fontSize: 12,
                           color: Colors.grey[600],
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${taskTime.hour.toString().padLeft(2, '0')}:${taskTime.minute.toString().padLeft(2, '0')}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  if (memo.isNotEmpty) ...[
+                      ),
+                    ],
+                  ),
+                  if (task.memo != null && task.memo!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      memo,
+                      task.memo!,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey[600],
@@ -493,7 +438,7 @@ class TableCalendar extends StatefulWidget {
   final StartingDayOfWeek startingDayOfWeek;
   final CalendarStyle calendarStyle;
   final HeaderStyle headerStyle;
-  final List<Map<String, dynamic>> Function(DateTime) eventLoader;
+  final List<Task> Function(DateTime) eventLoader;
 
   const TableCalendar({
     super.key,
