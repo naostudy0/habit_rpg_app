@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'task_edit_page.dart';
 import '../services/api_service.dart';
+import '../services/error_handler.dart';
 import '../models/task.dart';
 
 class TaskListPage extends StatefulWidget {
@@ -12,6 +13,7 @@ class TaskListPage extends StatefulWidget {
 
 class _TaskListPageState extends State<TaskListPage> {
   final ApiService _apiService = ApiService();
+  final ErrorHandler _errorHandler = ErrorHandler();
   List<Task> _tasks = [];
   bool _isLoading = false;
   bool _isInitialLoading = true;
@@ -40,10 +42,11 @@ class _TaskListPageState extends State<TaskListPage> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = e is ApiException ? e.getErrorMessage() : e.toString();
+        _errorMessage = _errorHandler.getErrorMessage(e);
         _isLoading = false;
         _isInitialLoading = false;
       });
+      _errorHandler.logError(e, context: '予定一覧取得');
     }
   }
 
@@ -86,29 +89,15 @@ class _TaskListPageState extends State<TaskListPage> {
           ),
         );
       }
-    } on ApiException catch (e) {
-      setState(() {
-        _completingTaskUuids.remove(task.uuid);
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.getErrorMessage()),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
     } catch (e) {
       setState(() {
         _completingTaskUuids.remove(task.uuid);
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('予定の完了状態の切り替えに失敗しました: $e'),
-            backgroundColor: Colors.red,
-          ),
+        _errorHandler.handleError(
+          context,
+          e,
+          contextMessage: '予定完了状態切り替え',
         );
       }
     }
@@ -171,31 +160,16 @@ class _TaskListPageState extends State<TaskListPage> {
           ),
         );
       }
-    } on ApiException catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = e.getErrorMessage();
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.getErrorMessage()),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString();
+          _errorMessage = _errorHandler.getErrorMessage(e);
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('予定の削除に失敗しました: $e'),
-            backgroundColor: Colors.red,
-          ),
+        _errorHandler.handleError(
+          context,
+          e,
+          contextMessage: '予定削除',
         );
       }
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/error_handler.dart';
 
 class TaskCreatePage extends StatefulWidget {
   final DateTime? initialDate;
@@ -15,6 +16,7 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
   final _titleController = TextEditingController();
   final _memoController = TextEditingController();
   final _apiService = ApiService();
+  final _errorHandler = ErrorHandler();
   late DateTime _selectedDate;
   TimeOfDay _selectedTime = TimeOfDay.now();
   bool _isLoading = false;
@@ -108,37 +110,25 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
             ),
           );
         }
-      } on ApiException catch (e) {
-        // APIエラー時の処理
+      } catch (e) {
+        // エラー時の処理
         if (mounted) {
           // フィールドごとのエラーメッセージを設定
           setState(() {
-            _titleError = e.getFieldError('title');
+            _titleError = _errorHandler.getFieldError(e, 'title');
           });
 
           // フィールドエラーがない場合は、一般的なエラーメッセージを表示
           if (_titleError == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(e.getErrorMessage()),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 5),
-              ),
+            _errorHandler.handleError(
+              context,
+              e,
+              contextMessage: '予定作成',
             );
           } else {
             // フィールドエラーがある場合は、フォームを再検証してエラーを表示
             _formKey.currentState?.validate();
           }
-        }
-      } catch (e) {
-        // その他のエラー時の処理
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('予定の登録に失敗しました: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
         }
       } finally {
         if (mounted) {
