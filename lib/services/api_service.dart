@@ -256,7 +256,7 @@ class ApiService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        
+
         // レスポンスからTaskデータを取得
         final taskData = responseData['data'] ?? responseData;
         if (taskData is Map<String, dynamic>) {
@@ -391,6 +391,61 @@ class ApiService {
         throw ApiException(
           statusCode: response.statusCode,
           message: errorData['message'] as String? ?? '予定の削除に失敗しました',
+          errors: errorData['errors'] as Map<String, dynamic>?,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      if (e is FormatException) {
+        // JSONパースエラーの場合
+        throw ApiException(
+          statusCode: 0,
+          message: 'サーバーからの応答を解析できませんでした',
+          errors: null,
+        );
+      }
+      throw ApiException(
+        statusCode: 0,
+        message: 'ネットワークエラー: $e',
+        errors: null,
+      );
+    }
+  }
+
+  // 予定完了状態切り替えAPI
+  Future<Task> toggleTaskCompletion({
+    required String uuid,
+    required bool isCompleted,
+  }) async {
+    try {
+      final headers = await _headers;
+      final response = await http.patch(
+        Uri.parse('$_baseUrl/api/tasks/$uuid/complete'),
+        headers: headers,
+        body: jsonEncode({
+          'is_completed': isCompleted,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        final taskData = responseData['data'] ?? responseData;
+        if (taskData is Map<String, dynamic>) {
+          return Task.fromJson(taskData);
+        } else {
+          throw ApiException(
+            statusCode: response.statusCode,
+            message: '予定データの形式が不正です',
+            errors: null,
+          );
+        }
+      } else {
+        // エラーレスポンスをパース
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: errorData['message'] as String? ?? '予定の完了状態の切り替えに失敗しました',
           errors: errorData['errors'] as Map<String, dynamic>?,
         );
       }

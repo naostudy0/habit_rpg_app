@@ -21,10 +21,12 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   Map<DateTime, List<Task>> _events = {};
+  final Set<String> _completingTaskUuids = {}; // 完了状態切り替え中のタスクUUID
 
   @override
   void initState() {
     super.initState();
+    _completingTaskUuids.clear();
     _loadTasks();
   }
 
@@ -74,6 +76,73 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
     final tasks = _events[dateKey] ?? [];
     // Taskオブジェクトのみを返すようにフィルタリング
     return tasks.whereType<Task>().toList();
+  }
+
+  // 予定完了状態切り替え
+  Future<void> _toggleTaskCompletion(Task task) async {
+    if (task.uuid.isEmpty) {
+      return;
+    }
+
+    final newCompletionState = !task.isCompleted;
+
+    setState(() {
+      _completingTaskUuids.add(task.uuid);
+    });
+
+    try {
+      final updatedTask = await _apiService.toggleTaskCompletion(
+        uuid: task.uuid,
+        isCompleted: newCompletionState,
+      );
+
+      // タスクリストとイベントマップを更新
+      setState(() {
+        final index = _tasks.indexWhere((t) => t.uuid == task.uuid);
+        if (index != -1) {
+          _tasks[index] = updatedTask;
+        }
+        _events = _groupTasksByDate(_tasks);
+        _completingTaskUuids.remove(task.uuid);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newCompletionState ? '予定を完了にしました' : '予定を未完了にしました',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      setState(() {
+        _completingTaskUuids.remove(task.uuid);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.getErrorMessage()),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _completingTaskUuids.remove(task.uuid);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('予定の完了状態の切り替えに失敗しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // カレンダーの日付ビルダー
@@ -337,25 +406,47 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
             return const SizedBox.shrink();
           }
 
+          // UUIDが空の場合はスキップ
+          if (task.uuid.isEmpty) {
+            return const SizedBox.shrink();
+          }
+
+          final isCompleting = _completingTaskUuids.contains(task.uuid);
+
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             elevation: 2,
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
-              leading: Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: task.isCompleted
-                      ? Colors.green.withOpacity(0.2)
-                      : Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: Icon(
-                  task.isCompleted ? Icons.check : Icons.schedule,
-                  color: task.isCompleted
-                      ? Colors.green
-                      : Theme.of(context).colorScheme.primary,
+              leading: GestureDetector(
+                onTap: isCompleting ? null : () => _toggleTaskCompletion(task),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: task.isCompleted
+                        ? Colors.green.withOpacity(0.2)
+                        : Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: isCompleting
+                      ? const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
+                          color: task.isCompleted
+                              ? Colors.green
+                              : Theme.of(context).colorScheme.primary,
+                          size: 28,
+                        ),
                 ),
               ),
               title: Text(
@@ -407,7 +498,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                 Icons.edit,
                 color: Colors.grey[400],
               ),
-              onTap: () async {
+              onTap: isCompleting ? null : () async {
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
