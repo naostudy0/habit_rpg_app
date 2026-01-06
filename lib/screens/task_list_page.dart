@@ -10,10 +10,10 @@ import '../utils/time_formatter.dart';
 
 // 並び替えタイプの列挙型
 enum TaskSortType {
-  dateAscending,        // 日付順
-  createdAtAscending,   // 作成日順
-  titleAscending,       // タイトル順
-  completionStatus,     // 完了状態
+  dateAscending, // 日付順
+  createdAtAscending, // 作成日順
+  titleAscending, // タイトル順
+  completionStatus, // 完了状態
 }
 
 class TaskListPage extends StatefulWidget {
@@ -127,9 +127,7 @@ class _TaskListPageState extends State<TaskListPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              newCompletionState ? '予定を完了にしました' : '予定を未完了にしました',
-            ),
+            content: Text(newCompletionState ? '予定を完了にしました' : '予定を未完了にしました'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
@@ -140,11 +138,7 @@ class _TaskListPageState extends State<TaskListPage> {
         _completingTaskUuids.remove(task.uuid);
       });
       if (mounted) {
-        _errorHandler.handleError(
-          context,
-          e,
-          contextMessage: '予定完了状態切り替え',
-        );
+        _errorHandler.handleError(context, e, contextMessage: '予定完了状態切り替え');
       }
     }
   }
@@ -175,9 +169,7 @@ class _TaskListPageState extends State<TaskListPage> {
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('削除'),
             ),
           ],
@@ -212,11 +204,7 @@ class _TaskListPageState extends State<TaskListPage> {
         setState(() {
           _errorMessage = _errorHandler.getErrorMessage(e);
         });
-        _errorHandler.handleError(
-          context,
-          e,
-          contextMessage: '予定削除',
-        );
+        _errorHandler.handleError(context, e, contextMessage: '予定削除');
       }
     } finally {
       _loadingService.setLoading(_loadingOperationDelete, false);
@@ -231,7 +219,8 @@ class _TaskListPageState extends State<TaskListPage> {
         final searchQuery = _searchController.text.toLowerCase().trim();
         if (searchQuery.isNotEmpty) {
           final titleMatch = task.title.toLowerCase().contains(searchQuery);
-          final memoMatch = task.memo?.toLowerCase().contains(searchQuery) ?? false;
+          final memoMatch =
+              task.memo?.toLowerCase().contains(searchQuery) ?? false;
           if (!titleMatch && !memoMatch) {
             return false;
           }
@@ -521,7 +510,9 @@ class _TaskListPageState extends State<TaskListPage> {
               ],
             ),
             IconButton(
-              icon: Icon(_showFilters ? Icons.filter_alt : Icons.filter_alt_outlined),
+              icon: Icon(
+                _showFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
+              ),
               onPressed: () {
                 setState(() {
                   _showFilters = !_showFilters;
@@ -564,9 +555,7 @@ class _TaskListPageState extends State<TaskListPage> {
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey[300]!),
-                  ),
+                  border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -649,7 +638,11 @@ class _TaskListPageState extends State<TaskListPage> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+                                  const Icon(
+                                    Icons.calendar_today,
+                                    size: 18,
+                                    color: Colors.grey,
+                                  ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -657,7 +650,9 @@ class _TaskListPageState extends State<TaskListPage> {
                                           ? '開始日'
                                           : '${_startDate!.year}/${_startDate!.month}/${_startDate!.day}',
                                       style: TextStyle(
-                                        color: _startDate == null ? Colors.grey[600] : Colors.black87,
+                                        color: _startDate == null
+                                            ? Colors.grey[600]
+                                            : Colors.black87,
                                       ),
                                     ),
                                   ),
@@ -693,7 +688,11 @@ class _TaskListPageState extends State<TaskListPage> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+                                  const Icon(
+                                    Icons.calendar_today,
+                                    size: 18,
+                                    color: Colors.grey,
+                                  ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -701,7 +700,9 @@ class _TaskListPageState extends State<TaskListPage> {
                                           ? '終了日'
                                           : '${_endDate!.year}/${_endDate!.month}/${_endDate!.day}',
                                       style: TextStyle(
-                                        color: _endDate == null ? Colors.grey[600] : Colors.black87,
+                                        color: _endDate == null
+                                            ? Colors.grey[600]
+                                            : Colors.black87,
                                       ),
                                     ),
                                   ),
@@ -728,9 +729,7 @@ class _TaskListPageState extends State<TaskListPage> {
                 ),
               ),
             // メインコンテンツ
-            Expanded(
-              child: _buildBody(),
-            ),
+            Expanded(child: _buildBody()),
           ],
         ),
       ),
@@ -740,9 +739,7 @@ class _TaskListPageState extends State<TaskListPage> {
   Widget _buildBody() {
     // 初期ローディング中
     if (_isInitialLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     // エラー表示
@@ -751,11 +748,7 @@ class _TaskListPageState extends State<TaskListPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red[300],
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
             Text(
               'エラーが発生しました',
@@ -771,10 +764,7 @@ class _TaskListPageState extends State<TaskListPage> {
               child: Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             ),
             const SizedBox(height: 24),
@@ -800,26 +790,16 @@ class _TaskListPageState extends State<TaskListPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.task_alt,
-                    size: 64,
-                    color: Colors.grey,
-                  ),
+                  Icon(Icons.task_alt, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
                     '予定がありません',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                   SizedBox(height: 8),
                   Text(
                     '新しい予定を追加してみましょう',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
               ),
@@ -841,18 +821,11 @@ class _TaskListPageState extends State<TaskListPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.search_off,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
+                  Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     '検索条件に一致する予定がありません',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   TextButton(
@@ -893,7 +866,9 @@ class _TaskListPageState extends State<TaskListPage> {
                   decoration: BoxDecoration(
                     color: task.isCompleted
                         ? Colors.green.withOpacity(0.2)
-                        : Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        : Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: isCompleting
@@ -901,13 +876,13 @@ class _TaskListPageState extends State<TaskListPage> {
                           child: SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         )
                       : Icon(
-                          task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
+                          task.isCompleted
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
                           color: task.isCompleted
                               ? Colors.green
                               : Theme.of(context).colorScheme.primary,
@@ -939,10 +914,7 @@ class _TaskListPageState extends State<TaskListPage> {
                       const SizedBox(width: 4),
                       Text(
                         '${task.scheduledDate.year}/${task.scheduledDate.month.toString().padLeft(2, '0')}/${task.scheduledDate.day.toString().padLeft(2, '0')}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       const SizedBox(width: 16),
                       Icon(
@@ -953,10 +925,7 @@ class _TaskListPageState extends State<TaskListPage> {
                       const SizedBox(width: 4),
                       Text(
                         TimeFormatter.formatTime(task.scheduledTime),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -964,10 +933,7 @@ class _TaskListPageState extends State<TaskListPage> {
                     const SizedBox(height: 4),
                     Text(
                       task.memo!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -980,7 +946,31 @@ class _TaskListPageState extends State<TaskListPage> {
                   IconButton(
                     icon: const Icon(Icons.edit),
                     color: Colors.grey[600],
-                    onPressed: isCompleting ? null : () async {
+                    onPressed: isCompleting
+                        ? null
+                        : () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TaskEditPage(task: task),
+                              ),
+                            );
+                            // 編集画面から戻ってきたら、削除された可能性があるので一覧を再読み込み
+                            if (result == true) {
+                              _loadTasks();
+                            }
+                          },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    color: Colors.red[400],
+                    onPressed: isCompleting ? null : () => _deleteTask(task),
+                  ),
+                ],
+              ),
+              onTap: isCompleting
+                  ? null
+                  : () async {
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -992,26 +982,6 @@ class _TaskListPageState extends State<TaskListPage> {
                         _loadTasks();
                       }
                     },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    color: Colors.red[400],
-                    onPressed: isCompleting ? null : () => _deleteTask(task),
-                  ),
-                ],
-              ),
-              onTap: isCompleting ? null : () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TaskEditPage(task: task),
-                  ),
-                );
-                // 編集画面から戻ってきたら、削除された可能性があるので一覧を再読み込み
-                if (result == true) {
-                  _loadTasks();
-                }
-              },
             ),
           );
         },

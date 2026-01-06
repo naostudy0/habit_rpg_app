@@ -30,6 +30,11 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      # 環境変数を設定
+      - name: Prepare environment config
+        run: |
+          cp lib/config/environment.example.dart lib/config/environment.dart
+
       - name: Verify formatting
         run: dart format --set-exit-if-changed .
         continue-on-error: true

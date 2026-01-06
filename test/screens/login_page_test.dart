@@ -10,11 +10,7 @@ void main() {
     });
 
     testWidgets('ログインページが正しく表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: LoginPage(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: LoginPage()));
 
       // AppBarのタイトルが表示されているか確認
       expect(find.text('ログイン'), findsWidgets);
@@ -27,11 +23,7 @@ void main() {
     });
 
     testWidgets('メールアドレスとパスワードを入力できる', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: LoginPage(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: LoginPage()));
 
       // メールアドレス入力フィールドを見つける
       final emailField = find.byType(TextFormField).first;
@@ -47,11 +39,7 @@ void main() {
     });
 
     testWidgets('空のメールアドレスでバリデーションエラーが表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: LoginPage(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: LoginPage()));
       await tester.pump();
 
       // ElevatedButtonを探す
@@ -71,11 +59,7 @@ void main() {
     });
 
     testWidgets('空のパスワードでバリデーションエラーが表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: LoginPage(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: LoginPage()));
       await tester.pump();
 
       // メールアドレスのみ入力

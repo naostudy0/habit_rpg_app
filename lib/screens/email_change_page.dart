@@ -9,7 +9,9 @@ class EmailChangePage extends StatefulWidget {
 
 class _EmailChangePageState extends State<EmailChangePage> {
   final _formKey = GlobalKey<FormState>();
-  final _currentEmailController = TextEditingController(text: 'user@example.com');
+  final _currentEmailController = TextEditingController(
+    text: 'user@example.com',
+  );
   final _newEmailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
@@ -53,10 +55,7 @@ class _EmailChangePageState extends State<EmailChangePage> {
             // 現在のメールアドレス表示
             const Text(
               '現在のメールアドレス',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Container(
@@ -73,10 +72,7 @@ class _EmailChangePageState extends State<EmailChangePage> {
                   Expanded(
                     child: Text(
                       _currentEmailController.text,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   ),
                 ],
@@ -88,10 +84,7 @@ class _EmailChangePageState extends State<EmailChangePage> {
             // 新しいメールアドレス入力
             const Text(
               '新しいメールアドレス',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -110,7 +103,9 @@ class _EmailChangePageState extends State<EmailChangePage> {
                 if (value == null || value.isEmpty) {
                   return 'メールアドレスを入力してください';
                 }
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                if (!RegExp(
+                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                ).hasMatch(value)) {
                   return '有効なメールアドレスを入力してください';
                 }
                 if (value == _currentEmailController.text) {
@@ -125,10 +120,7 @@ class _EmailChangePageState extends State<EmailChangePage> {
             // パスワード確認
             const Text(
               'パスワード確認',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -139,7 +131,9 @@ class _EmailChangePageState extends State<EmailChangePage> {
                 prefixIcon: const Icon(Icons.lock),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    _isPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
                   ),
                   onPressed: () {
                     setState(() {
@@ -219,10 +213,7 @@ class _EmailChangePageState extends State<EmailChangePage> {
                 ),
                 child: const Text(
                   'メールアドレスを変更',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),

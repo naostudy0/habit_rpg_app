@@ -19,10 +19,7 @@ void main() {
 
   group('ApiException', () {
     test('エラーメッセージを取得できる', () {
-      final exception = ApiException(
-        statusCode: 400,
-        message: 'エラーメッセージ',
-      );
+      final exception = ApiException(statusCode: 400, message: 'エラーメッセージ');
       expect(exception.message, 'エラーメッセージ');
       expect(exception.statusCode, 400);
     });

@@ -85,19 +85,13 @@ class _FeedbackPageState extends State<FeedbackPage> {
                   const SizedBox(height: 12),
                   const Text(
                     'ご意見・ご要望をお聞かせください',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   const Text(
                     'アプリの改善に活用させていただきます',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -109,10 +103,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
             // カテゴリ選択
             const Text(
               'カテゴリ',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
@@ -142,10 +133,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
             // お名前入力
             const Text(
               'お名前（任意）',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -165,10 +153,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
             // メールアドレス入力
             const Text(
               'メールアドレス（任意）',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -184,7 +169,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
               ),
               validator: (value) {
                 if (value != null && value.isNotEmpty) {
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                  if (!RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  ).hasMatch(value)) {
                     return '有効なメールアドレスを入力してください';
                   }
                 }
@@ -197,10 +184,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
             // 件名入力
             const Text(
               '件名',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -226,10 +210,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
             // メッセージ入力
             const Text(
               'メッセージ',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -278,11 +259,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 ),
                 child: Column(
                   children: [
-                    const Icon(
-                      Icons.camera_alt,
-                      size: 48,
-                      color: Colors.grey,
-                    ),
+                    const Icon(Icons.camera_alt, size: 48, color: Colors.grey),
                     const SizedBox(height: 8),
                     const Text(
                       'スクリーンショットを追加',
@@ -324,10 +301,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 ),
                 child: const Text(
                   'フィードバックを送信',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -347,10 +321,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 children: [
                   Text(
                     '注意事項',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 8),
                   Text(

@@ -16,8 +16,8 @@ class TimeFormatter {
       final hour = time.hour == 0
           ? 12
           : time.hour > 12
-              ? time.hour - 12
-              : time.hour;
+          ? time.hour - 12
+          : time.hour;
       final period = time.hour < 12 ? 'AM' : 'PM';
       return '${hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} $period';
     }
@@ -33,10 +33,9 @@ class TimeFormatter {
     final hour = time.hour == 0
         ? 12
         : time.hour > 12
-            ? time.hour - 12
-            : time.hour;
+        ? time.hour - 12
+        : time.hour;
     final period = time.hour < 12 ? 'AM' : 'PM';
     return '${hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} $period';
   }
 }
-

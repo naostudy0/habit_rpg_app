@@ -1,7 +1,4 @@
-enum Environment {
-  development,
-  production,
-}
+enum Environment { development, production }
 
 class EnvironmentConfig {
   static Environment _environment = Environment.development;

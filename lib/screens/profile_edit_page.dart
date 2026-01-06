@@ -47,10 +47,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             onPressed: _saveProfile,
             child: const Text(
               '保存',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -63,10 +60,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             // アバター選択セクション
             const Text(
               'アバター',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Center(
@@ -104,10 +98,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             // ユーザー名入力
             const Text(
               'ユーザー名',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -136,10 +127,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             // 自己紹介入力
             const Text(
               '自己紹介',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -160,10 +148,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             // 統計情報（読み取り専用）
             const Text(
               '統計情報',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Card(
@@ -202,10 +187,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 ),
                 child: const Text(
                   'プロフィールを保存',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -219,19 +201,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-          ),
-        ),
+        Text(label, style: const TextStyle(fontSize: 16, color: Colors.grey)),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
     );

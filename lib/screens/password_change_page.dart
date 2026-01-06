@@ -55,10 +55,7 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
             // 現在のパスワード入力
             const Text(
               '現在のパスワード',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -69,7 +66,9 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
                 prefixIcon: const Icon(Icons.lock),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _isCurrentPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    _isCurrentPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
                   ),
                   onPressed: () {
                     setState(() {
@@ -96,10 +95,7 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
             // 新しいパスワード入力
             const Text(
               '新しいパスワード',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -110,7 +106,9 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _isNewPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    _isNewPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
                   ),
                   onPressed: () {
                     setState(() {
@@ -131,7 +129,9 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
                 if (value.length < 8) {
                   return 'パスワードは8文字以上で入力してください';
                 }
-                if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
+                if (!RegExp(
+                  r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)',
+                ).hasMatch(value)) {
                   return 'パスワードは英大文字、英小文字、数字を含む必要があります';
                 }
                 return null;
@@ -143,10 +143,7 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
             // 新しいパスワード確認入力
             const Text(
               '新しいパスワード（確認）',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -157,7 +154,9 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    _isConfirmPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
                   ),
                   onPressed: () {
                     setState(() {
@@ -244,10 +243,7 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
                 ),
                 child: const Text(
                   'パスワードを変更',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -294,10 +290,7 @@ class _PasswordChangePageState extends State<PasswordChangePage> {
       children: [
         const Text(
           'パスワード強度',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Row(

@@ -27,7 +27,7 @@ class SettingsService extends ChangeNotifier {
   /// 設定を初期化（SharedPreferencesから読み込み）
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // ダークモード設定
     _isDarkMode = prefs.getBool(_keyIsDarkMode) ?? false;
 
@@ -82,12 +82,12 @@ class SettingsService extends ChangeNotifier {
     await prefs.remove(_keyLanguage);
     await prefs.remove(_keyDateFormat);
     await prefs.remove(_keyTimeFormat);
-    
+
     _isDarkMode = false;
     _language = 'ja';
     _dateFormat = 'yyyy/MM/dd';
     _is24HourFormat = false;
-    
+
     notifyListeners();
   }
 }

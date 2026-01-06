@@ -45,10 +45,7 @@ class _MyPageTopState extends State<MyPageTop> {
       // 認証されていない場合はログイン画面にリダイレクト
       if (!isAuthenticated) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/',
-            (route) => false,
-          );
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
         });
       } else {
         // 認証されている場合は、AI提案予定を取得
@@ -94,10 +91,7 @@ class _MyPageTopState extends State<MyPageTop> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '以下の予定を追加しますか？',
-                style: TextStyle(fontSize: 16),
-              ),
+              const Text('以下の予定を追加しますか？', style: TextStyle(fontSize: 16)),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -115,14 +109,12 @@ class _MyPageTopState extends State<MyPageTop> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (suggestion.memo != null && suggestion.memo!.isNotEmpty) ...[
+                    if (suggestion.memo != null &&
+                        suggestion.memo!.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Text(
                         suggestion.memo!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[700],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                       ),
                     ],
                   ],
@@ -137,10 +129,7 @@ class _MyPageTopState extends State<MyPageTop> {
                 Navigator.of(context).pop(false);
                 await _deleteSuggestion(suggestion);
               },
-              child: const Text(
-                'NG',
-                style: TextStyle(color: Colors.red),
-              ),
+              child: const Text('NG', style: TextStyle(color: Colors.red)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -184,20 +173,12 @@ class _MyPageTopState extends State<MyPageTop> {
   Widget build(BuildContext context) {
     // 認証チェック中はローディング表示
     if (_isCheckingAuth) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     // 認証されていない場合は何も表示しない（リダイレクト中）
     if (!_isAuthenticated) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -210,9 +191,7 @@ class _MyPageTopState extends State<MyPageTop> {
             onPressed: () async {
               final result = await Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const SettingsPage(),
-                ),
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
               );
               // 設定ページで名前が更新された場合は、ユーザー名を再取得
               if (result == true && mounted) {
@@ -294,10 +273,7 @@ class _MyPageTopState extends State<MyPageTop> {
             // ナビゲーションセクション
             const Text(
               'メニュー',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
@@ -311,17 +287,11 @@ class _MyPageTopState extends State<MyPageTop> {
                     color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
-                    Icons.add_task,
-                    color: Colors.white,
-                  ),
+                  child: const Icon(Icons.add_task, color: Colors.white),
                 ),
                 title: const Text(
                   '予定を追加',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 subtitle: const Text('新しい習慣やタスクを追加'),
                 trailing: const Icon(Icons.arrow_forward_ios),
@@ -348,17 +318,11 @@ class _MyPageTopState extends State<MyPageTop> {
                     color: Theme.of(context).colorScheme.secondary,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
-                    Icons.list_alt,
-                    color: Colors.white,
-                  ),
+                  child: const Icon(Icons.list_alt, color: Colors.white),
                 ),
                 title: const Text(
                   '予定一覧',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 subtitle: const Text('登録済みの習慣やタスクを確認'),
                 trailing: const Icon(Icons.arrow_forward_ios),
@@ -385,17 +349,11 @@ class _MyPageTopState extends State<MyPageTop> {
                     color: Colors.orange[400],
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
-                    Icons.calendar_today,
-                    color: Colors.white,
-                  ),
+                  child: const Icon(Icons.calendar_today, color: Colors.white),
                 ),
                 title: const Text(
                   'カレンダー',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 subtitle: const Text('予定をカレンダー形式で確認'),
                 trailing: const Icon(Icons.arrow_forward_ios),
@@ -422,17 +380,11 @@ class _MyPageTopState extends State<MyPageTop> {
                     color: Colors.grey[600],
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
-                    Icons.settings,
-                    color: Colors.white,
-                  ),
+                  child: const Icon(Icons.settings, color: Colors.white),
                 ),
                 title: const Text(
                   '設定',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 subtitle: const Text('アプリの設定を変更'),
                 trailing: const Icon(Icons.arrow_forward_ios),
@@ -490,11 +442,7 @@ class _MyPageTopState extends State<MyPageTop> {
 
       if (mounted) {
         // ログイン画面に遷移
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/',
-          (route) => false,
-        );
+        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -506,10 +454,7 @@ class _MyPageTopState extends State<MyPageTop> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('ログアウトエラー: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('ログアウトエラー: $e'), backgroundColor: Colors.red),
         );
       }
     }

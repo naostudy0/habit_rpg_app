@@ -29,7 +29,8 @@ class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _passwordConfirmController = TextEditingController();
+  final TextEditingController _passwordConfirmController =
+      TextEditingController();
 
   static const String _loadingOperation = 'load_user';
   static const String _loadingOperationUpdate = 'update_user';
@@ -153,17 +154,12 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     } catch (e) {
       if (mounted) {
-        _errorHandler.handleError(
-          context,
-          e,
-          contextMessage: 'プロフィール更新',
-        );
+        _errorHandler.handleError(context, e, contextMessage: 'プロフィール更新');
       }
     } finally {
       _loadingService.setLoading(_loadingOperationUpdate, false);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -180,55 +176,48 @@ class _SettingsPageState extends State<SettingsPage> {
         body: _isInitialLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null && _user == null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.red[300],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'エラーが発生しました',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[800],
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32),
-                          child: Text(
-                            _errorMessage!,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: _loadUser,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('再試行'),
-                        ),
-                      ],
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'エラーが発生しました',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[800],
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      // アカウント設定セクション
-                      _buildAccountSection(),
-                      const SizedBox(height: 24),
-                      // 表示設定セクション
-                      _buildDisplaySection(),
-                    ],
-                  ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: _loadUser,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('再試行'),
+                    ),
+                  ],
+                ),
+              )
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // アカウント設定セクション
+                  _buildAccountSection(),
+                  const SizedBox(height: 24),
+                  // 表示設定セクション
+                  _buildDisplaySection(),
+                ],
+              ),
       ),
     );
   }
@@ -251,10 +240,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(width: 8),
                 const Text(
                   'アカウント設定',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -315,7 +301,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _loadingService.isLoading(_loadingOperationUpdate)
+                    onPressed:
+                        _loadingService.isLoading(_loadingOperationUpdate)
                         ? null
                         : _updateUser,
                     child: _loadingService.isLoading(_loadingOperationUpdate)
@@ -353,10 +340,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(width: 8),
                 const Text(
                   '表示設定',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -423,5 +407,4 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
-
 }

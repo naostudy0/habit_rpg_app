@@ -116,7 +116,11 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
 
   // 選択された日の予定を取得
   List<Task> _getSelectedDayTasks() {
-    final dateKey = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
+    final dateKey = DateTime(
+      _selectedDay.year,
+      _selectedDay.month,
+      _selectedDay.day,
+    );
     final tasks = _events[dateKey] ?? [];
     // Taskオブジェクトのみを返すようにフィルタリング
     return tasks.whereType<Task>().toList();
@@ -153,9 +157,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              newCompletionState ? '予定を完了にしました' : '予定を未完了にしました',
-            ),
+            content: Text(newCompletionState ? '予定を完了にしました' : '予定を未完了にしました'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
@@ -194,10 +196,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
             : Colors.transparent,
         shape: BoxShape.circle,
         border: isToday
-            ? Border.all(
-                color: Theme.of(context).colorScheme.primary,
-                width: 2,
-              )
+            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
             : null,
       ),
       child: Column(
@@ -209,9 +208,11 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
               color: isSelected
                   ? Theme.of(context).colorScheme.primary
                   : isToday
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.black87,
-              fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.normal,
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.black87,
+              fontWeight: isSelected || isToday
+                  ? FontWeight.bold
+                  : FontWeight.normal,
             ),
           ),
           if (dayTasks.isNotEmpty)
@@ -252,7 +253,9 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                 _completionFilter == null
                     ? Icons.filter_alt_outlined
                     : Icons.filter_alt,
-                color: _completionFilter == null ? null : Theme.of(context).colorScheme.primary,
+                color: _completionFilter == null
+                    ? null
+                    : Theme.of(context).colorScheme.primary,
               ),
               tooltip: 'フィルター',
               onSelected: (value) {
@@ -273,7 +276,9 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                   child: Row(
                     children: [
                       Icon(
-                        _completionFilter == null ? Icons.check : Icons.radio_button_unchecked,
+                        _completionFilter == null
+                            ? Icons.check
+                            : Icons.radio_button_unchecked,
                         size: 20,
                         color: _completionFilter == null
                             ? Theme.of(context).colorScheme.primary
@@ -289,7 +294,9 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                   child: Row(
                     children: [
                       Icon(
-                        _completionFilter == false ? Icons.check : Icons.radio_button_unchecked,
+                        _completionFilter == false
+                            ? Icons.check
+                            : Icons.radio_button_unchecked,
                         size: 20,
                         color: _completionFilter == false
                             ? Theme.of(context).colorScheme.primary
@@ -305,7 +312,9 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                   child: Row(
                     children: [
                       Icon(
-                        _completionFilter == true ? Icons.check : Icons.radio_button_unchecked,
+                        _completionFilter == true
+                            ? Icons.check
+                            : Icons.radio_button_unchecked,
                         size: 20,
                         color: _completionFilter == true
                             ? Theme.of(context).colorScheme.primary
@@ -324,9 +333,8 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => TaskCreatePage(
-                      initialDate: _selectedDay,
-                    ),
+                    builder: (context) =>
+                        TaskCreatePage(initialDate: _selectedDay),
                   ),
                 );
                 if (result == true) {
@@ -344,9 +352,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
   Widget _buildBody() {
     // 初期ローディング中
     if (_isInitialLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     // エラー表示
@@ -355,11 +361,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red[300],
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
             Text(
               'エラーが発生しました',
@@ -375,10 +377,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
               child: Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             ),
             const SizedBox(height: 24),
@@ -398,18 +397,11 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.filter_alt_off,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.filter_alt_off, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'フィルター条件に一致する予定がありません',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -452,9 +444,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
             startingDayOfWeek: StartingDayOfWeek.monday,
             calendarStyle: CalendarStyle(
               outsideDaysVisible: false,
-              weekendTextStyle: TextStyle(
-                color: Colors.red[400],
-              ),
+              weekendTextStyle: TextStyle(color: Colors.red[400]),
               selectedDecoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
@@ -481,9 +471,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
         ),
         const Divider(),
         // 選択された日の予定一覧
-        Expanded(
-          child: _buildSelectedDayTasks(),
-        ),
+        Expanded(child: _buildSelectedDayTasks()),
       ],
     );
   }
@@ -496,18 +484,11 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.event_available,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.event_available, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               '${_selectedDay.year}/${_selectedDay.month}/${_selectedDay.day}の予定はありません',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
             ElevatedButton.icon(
@@ -515,9 +496,8 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => TaskCreatePage(
-                      initialDate: _selectedDay,
-                    ),
+                    builder: (context) =>
+                        TaskCreatePage(initialDate: _selectedDay),
                   ),
                 );
                 if (result == true) {
@@ -547,9 +527,8 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => TaskCreatePage(
-                        initialDate: _selectedDay,
-                      ),
+                      builder: (context) =>
+                          TaskCreatePage(initialDate: _selectedDay),
                     ),
                   );
                   if (result == true) {
@@ -593,7 +572,9 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                   decoration: BoxDecoration(
                     color: task.isCompleted
                         ? Colors.green.withOpacity(0.2)
-                        : Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        : Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: isCompleting
@@ -601,13 +582,13 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                           child: SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         )
                       : Icon(
-                          task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
+                          task.isCompleted
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
                           color: task.isCompleted
                               ? Colors.green
                               : Theme.of(context).colorScheme.primary,
@@ -639,10 +620,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                       const SizedBox(width: 4),
                       Text(
                         TimeFormatter.formatTime(task.scheduledTime),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -650,31 +628,27 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                     const SizedBox(height: 4),
                     Text(
                       task.memo!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ],
               ),
-              trailing: Icon(
-                Icons.edit,
-                color: Colors.grey[400],
-              ),
-              onTap: isCompleting ? null : () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TaskEditPage(task: task),
-                  ),
-                );
-                if (result == true) {
-                  _loadTasks();
-                }
-              },
+              trailing: Icon(Icons.edit, color: Colors.grey[400]),
+              onTap: isCompleting
+                  ? null
+                  : () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TaskEditPage(task: task),
+                        ),
+                      );
+                      if (result == true) {
+                        _loadTasks();
+                      }
+                    },
             ),
           );
         },
@@ -775,7 +749,10 @@ class _TableCalendarState extends State<TableCalendar> {
             IconButton(
               icon: const Icon(Icons.chevron_left),
               onPressed: () {
-                final newMonth = DateTime(_focusedDay.year, _focusedDay.month - 1);
+                final newMonth = DateTime(
+                  _focusedDay.year,
+                  _focusedDay.month - 1,
+                );
                 setState(() {
                   _focusedDay = newMonth;
                 });
@@ -784,15 +761,15 @@ class _TableCalendarState extends State<TableCalendar> {
             ),
             Text(
               '${_focusedDay.year}年${_focusedDay.month}月',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             IconButton(
               icon: const Icon(Icons.chevron_right),
               onPressed: () {
-                final newMonth = DateTime(_focusedDay.year, _focusedDay.month + 1);
+                final newMonth = DateTime(
+                  _focusedDay.year,
+                  _focusedDay.month + 1,
+                );
                 setState(() {
                   _focusedDay = newMonth;
                 });
@@ -845,12 +822,14 @@ class _TableCalendarState extends State<TableCalendar> {
                       color: isSelected
                           ? widget.calendarStyle.selectedDecoration?.color
                           : isToday
-                              ? widget.calendarStyle.todayDecoration?.color
-                              : Colors.transparent,
+                          ? widget.calendarStyle.todayDecoration?.color
+                          : Colors.transparent,
                       shape: BoxShape.circle,
                       border: isToday && !isSelected
                           ? Border.all(
-                              color: widget.calendarStyle.todayDecoration?.color ?? Colors.blue,
+                              color:
+                                  widget.calendarStyle.todayDecoration?.color ??
+                                  Colors.blue,
                               width: 2,
                             )
                           : null,
@@ -863,10 +842,10 @@ class _TableCalendarState extends State<TableCalendar> {
                           style: TextStyle(
                             color: isCurrentMonth
                                 ? (isSelected
-                                    ? Colors.white
-                                    : isToday
-                                        ? Theme.of(context).colorScheme.primary
-                                        : Colors.black87)
+                                      ? Colors.white
+                                      : isToday
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.black87)
                                 : Colors.grey[400],
                             fontWeight: isSelected || isToday
                                 ? FontWeight.bold
@@ -880,7 +859,11 @@ class _TableCalendarState extends State<TableCalendar> {
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: widget.calendarStyle.markerDecoration?.color ??
+                              color:
+                                  widget
+                                      .calendarStyle
+                                      .markerDecoration
+                                      ?.color ??
                                   Theme.of(context).colorScheme.primary,
                               shape: BoxShape.circle,
                             ),
@@ -899,22 +882,13 @@ class _TableCalendarState extends State<TableCalendar> {
 
   bool _isToday(DateTime day) {
     final now = DateTime.now();
-    return day.year == now.year &&
-        day.month == now.month &&
-        day.day == now.day;
+    return day.year == now.year && day.month == now.month && day.day == now.day;
   }
 }
 
-enum CalendarFormat {
-  month,
-  twoWeeks,
-  week,
-}
+enum CalendarFormat { month, twoWeeks, week }
 
-enum StartingDayOfWeek {
-  monday,
-  sunday,
-}
+enum StartingDayOfWeek { monday, sunday }
 
 class CalendarStyle {
   final bool outsideDaysVisible;

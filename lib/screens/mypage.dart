@@ -31,10 +31,7 @@ class _MyPageState extends State<MyPage> {
       // 認証されていない場合はログイン画面にリダイレクト
       if (!isAuthenticated) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/',
-            (route) => false,
-          );
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
         });
       }
     }
@@ -44,20 +41,12 @@ class _MyPageState extends State<MyPage> {
   Widget build(BuildContext context) {
     // 認証チェック中はローディング表示
     if (_isCheckingAuth) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     // 認証されていない場合は何も表示しない（リダイレクト中）
     if (!_isAuthenticated) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return Scaffold(
       appBar: AppBar(
@@ -68,21 +57,14 @@ class _MyPageState extends State<MyPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(
-              Icons.person,
-              size: 80,
-              color: Colors.grey,
-            ),
+            Icon(Icons.person, size: 80, color: Colors.grey),
             SizedBox(height: 20),
             Text(
               'マイページ',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),
-            Text(
-              'ログイン成功！',
-              style: TextStyle(fontSize: 16),
-            ),
+            Text('ログイン成功！', style: TextStyle(fontSize: 16)),
           ],
         ),
       ),

@@ -38,7 +38,8 @@ class Task {
       }
 
       // 日付の取得とパース
-      final dateValue = json['scheduled_date'] ?? json['date'] ?? json['scheduled_at'];
+      final dateValue =
+          json['scheduled_date'] ?? json['date'] ?? json['scheduled_at'];
       if (dateValue == null) {
         throw TaskParseException('予定日が見つかりません');
       }
@@ -98,7 +99,9 @@ class Task {
     return {
       'uuid': uuid,
       'title': title,
-      'scheduled_date': scheduledDate.toIso8601String().split('T')[0], // YYYY-MM-DD形式
+      'scheduled_date': scheduledDate.toIso8601String().split(
+        'T',
+      )[0], // YYYY-MM-DD形式
       'scheduled_time':
           '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00',
       if (memo != null && memo!.isNotEmpty) 'memo': memo,

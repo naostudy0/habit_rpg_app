@@ -73,11 +73,7 @@ class _LoginPageState extends State<LoginPage> {
 
           // フィールドエラーがない場合は、一般的なエラーメッセージを表示
           if (_emailError == null && _passwordError == null) {
-            _errorHandler.handleError(
-              context,
-              e,
-              contextMessage: 'ログイン',
-            );
+            _errorHandler.handleError(context, e, contextMessage: 'ログイン');
           } else {
             // フィールドエラーがある場合は、フォームを再検証してエラーを表示
             _formKey.currentState?.validate();
@@ -109,10 +105,7 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const Text(
                   'Habit RPG',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 40),
                 TextFormField(
@@ -167,16 +160,15 @@ class _LoginPageState extends State<LoginPage> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _loadingService.isLoading(_loadingOperation) ? null : _handleLogin,
+                    onPressed: _loadingService.isLoading(_loadingOperation)
+                        ? null
+                        : _handleLogin,
                     child: _loadingService.isLoading(_loadingOperation)
                         ? const SimpleLoadingIndicator(
                             color: Colors.white,
                             size: 20,
                           )
-                        : const Text(
-                            'ログイン',
-                            style: TextStyle(fontSize: 16),
-                          ),
+                        : const Text('ログイン', style: TextStyle(fontSize: 16)),
                   ),
                 ),
               ],
