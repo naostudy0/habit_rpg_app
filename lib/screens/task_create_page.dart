@@ -8,8 +8,15 @@ import '../utils/time_formatter.dart';
 
 class TaskCreatePage extends StatefulWidget {
   final DateTime? initialDate;
+  final String? initialTitle;
+  final String? initialMemo;
 
-  const TaskCreatePage({super.key, this.initialDate});
+  const TaskCreatePage({
+    super.key,
+    this.initialDate,
+    this.initialTitle,
+    this.initialMemo,
+  });
 
   @override
   State<TaskCreatePage> createState() => _TaskCreatePageState();
@@ -34,6 +41,14 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
     super.initState();
     _selectedDate = widget.initialDate ?? DateTime.now();
     _settingsService.addListener(_onSettingsChanged);
+
+    // 初期値が設定されている場合は、コントローラーに設定
+    if (widget.initialTitle != null) {
+      _titleController.text = widget.initialTitle!;
+    }
+    if (widget.initialMemo != null) {
+      _memoController.text = widget.initialMemo!;
+    }
   }
 
   @override

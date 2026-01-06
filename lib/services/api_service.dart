@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/environment.dart';
 import '../models/task.dart';
+import '../models/task_suggestion.dart';
 import '../models/user.dart';
 import 'auth_service.dart';
 
@@ -583,6 +584,112 @@ class ApiService {
       rethrow;
     } catch (e) {
       if (e is FormatException) {
+        throw ApiException(
+          statusCode: 0,
+          message: 'サーバーからの応答を解析できませんでした',
+          errors: null,
+        );
+      }
+      throw ApiException(
+        statusCode: 0,
+        message: 'ネットワークエラー: $e',
+        errors: null,
+      );
+    }
+  }
+
+  // AI提案予定一覧取得API
+  Future<List<TaskSuggestion>> getTaskSuggestions() async {
+    try {
+      final headers = await _headers;
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/task-suggestions'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        // レスポンスの形式に応じてデータを取得
+        List<dynamic> suggestionsData = [];
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('data') && responseData['data'] is List) {
+            suggestionsData = responseData['data'] as List;
+          } else if (responseData.containsKey('result') && responseData['result'] == true) {
+            suggestionsData = responseData['data'] as List? ?? [];
+          }
+        } else if (responseData is List) {
+          suggestionsData = responseData;
+        }
+
+        // TaskSuggestionモデルに変換
+        final suggestions = <TaskSuggestion>[];
+        for (final suggestionData in suggestionsData) {
+          try {
+            if (suggestionData is Map<String, dynamic>) {
+              suggestions.add(TaskSuggestion.fromJson(suggestionData));
+            }
+          } catch (e) {
+            // パースエラーはログに記録してスキップ
+            // ignore: avoid_print
+            print('TaskSuggestionのパースエラー: $e');
+          }
+        }
+        return suggestions;
+      } else {
+        // エラーレスポンスをパース
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: errorData['message'] as String? ?? 'AI提案予定の取得に失敗しました',
+          errors: errorData['errors'] as Map<String, dynamic>?,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      if (e is FormatException) {
+        // JSONパースエラーの場合
+        throw ApiException(
+          statusCode: 0,
+          message: 'サーバーからの応答を解析できませんでした',
+          errors: null,
+        );
+      }
+      throw ApiException(
+        statusCode: 0,
+        message: 'ネットワークエラー: $e',
+        errors: null,
+      );
+    }
+  }
+
+  // AI提案予定削除API
+  Future<void> deleteTaskSuggestion(String uuid) async {
+    try {
+      final headers = await _headers;
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/api/task-suggestions/$uuid'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        // 削除成功
+        return;
+      } else {
+        // エラーレスポンスをパース
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: errorData['message'] as String? ?? 'AI提案予定の削除に失敗しました',
+          errors: errorData['errors'] as Map<String, dynamic>?,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      if (e is FormatException) {
+        // JSONパースエラーの場合
         throw ApiException(
           statusCode: 0,
           message: 'サーバーからの応答を解析できませんでした',
