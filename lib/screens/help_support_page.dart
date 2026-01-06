@@ -11,7 +11,8 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
   final List<Map<String, dynamic>> _faqs = [
     {
       'question': '予定の追加方法を教えてください',
-      'answer': 'マイページの「予定を追加」ボタンをタップして、タイトル、日時、メモを入力してください。登録ボタンを押すと予定が保存されます。',
+      'answer':
+          'マイページの「予定を追加」ボタンをタップして、タイトル、日時、メモを入力してください。登録ボタンを押すと予定が保存されます。',
     },
     {
       'question': '予定の編集はできますか？',
@@ -68,42 +69,33 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // クイックアクセス
           const Text(
             'クイックアクセス',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           _buildQuickAccessSection(),
-          
+
           const SizedBox(height: 32),
-          
+
           // よくある質問
           const Text(
             'よくある質問',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           _buildFAQSection(),
-          
+
           const SizedBox(height: 32),
-          
+
           // お問い合わせ
           const Text(
             'お問い合わせ',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           _buildContactSection(),
@@ -125,36 +117,36 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
           icon: Icons.play_circle,
           title: '使い方ガイド',
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('使い方ガイドページへ遷移予定')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('使い方ガイドページへ遷移予定')));
           },
         ),
         _buildQuickAccessCard(
           icon: Icons.video_library,
           title: '動画チュートリアル',
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('動画チュートリアルページへ遷移予定')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('動画チュートリアルページへ遷移予定')));
           },
         ),
         _buildQuickAccessCard(
           icon: Icons.bug_report,
           title: 'バグ報告',
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('バグ報告ページへ遷移予定')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('バグ報告ページへ遷移予定')));
           },
         ),
         _buildQuickAccessCard(
           icon: Icons.feedback,
           title: '機能リクエスト',
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('機能リクエストページへ遷移予定')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('機能リクエストページへ遷移予定')));
           },
         ),
       ],
@@ -207,18 +199,12 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
         return ExpansionTile(
           title: Text(
             faq['question'],
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           children: [
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Text(
-                faq['answer'],
-                style: const TextStyle(fontSize: 14),
-              ),
+              child: Text(faq['answer'], style: const TextStyle(fontSize: 14)),
             ),
           ],
         );
@@ -239,9 +225,9 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
               subtitle: const Text('support@habit-rpg.com'),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('メールアプリが開きます')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('メールアプリが開きます')));
               },
             ),
             const Divider(),
@@ -263,9 +249,9 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
               subtitle: const Text('0120-XXX-XXX（平日 9:00-18:00）'),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('電話アプリが開きます')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('電話アプリが開きます')));
               },
             ),
           ],

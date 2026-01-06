@@ -13,11 +13,7 @@ class ApiException implements Exception {
   final String message;
   final Map<String, dynamic>? errors;
 
-  ApiException({
-    required this.statusCode,
-    required this.message,
-    this.errors,
-  });
+  ApiException({required this.statusCode, required this.message, this.errors});
 
   // エラーメッセージを取得（バリデーションエラーの場合は最初のエラーを返す）
   String getErrorMessage() {
@@ -98,10 +94,7 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$_baseUrl/api/auth/login'),
         headers: headers,
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
       if (response.statusCode == 200) {
@@ -117,7 +110,11 @@ class ApiService {
         // ユーザー情報を保存
         if (responseData['data'] != null) {
           final userData = responseData['data'] as Map<String, dynamic>;
-          final userName = userData['name'] ?? userData['username'] ?? userData['user_name'] ?? '';
+          final userName =
+              userData['name'] ??
+              userData['username'] ??
+              userData['user_name'] ??
+              '';
           final userEmail = userData['email'] ?? '';
           if (userName.isNotEmpty && userEmail.isNotEmpty) {
             await _authService.saveUserInfo(userName, userEmail);
@@ -145,11 +142,7 @@ class ApiService {
           errors: null,
         );
       }
-      throw ApiException(
-        statusCode: 0,
-        message: 'ネットワークエラー: $e',
-        errors: null,
-      );
+      throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
   }
 
@@ -157,10 +150,7 @@ class ApiService {
   Future<void> logout() async {
     try {
       final headers = await _headers;
-      await http.post(
-        Uri.parse('$_baseUrl/api/auth/logout'),
-        headers: headers,
-      );
+      await http.post(Uri.parse('$_baseUrl/api/auth/logout'), headers: headers);
     } catch (e) {
       // エラーが発生してもローカルのトークンは削除する
       // ignore: avoid_print
@@ -186,7 +176,8 @@ class ApiService {
         // レスポンスの形式に応じてデータを取得
         List<dynamic> tasksData = [];
         if (responseData is Map<String, dynamic>) {
-          if (responseData.containsKey('data') && responseData['data'] is List) {
+          if (responseData.containsKey('data') &&
+              responseData['data'] is List) {
             tasksData = responseData['data'] as List;
           }
         } else if (responseData is List) {
@@ -227,11 +218,7 @@ class ApiService {
           errors: null,
         );
       }
-      throw ApiException(
-        statusCode: 0,
-        message: 'ネットワークエラー: $e',
-        errors: null,
-      );
+      throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
   }
 
@@ -250,8 +237,11 @@ class ApiService {
         headers: headers,
         body: jsonEncode({
           'title': title,
-          'scheduled_date': scheduledDate.toIso8601String().split('T')[0], // YYYY-MM-DD形式
-          'scheduled_time': '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00',
+          'scheduled_date': scheduledDate.toIso8601String().split(
+            'T',
+          )[0], // YYYY-MM-DD形式
+          'scheduled_time':
+              '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00',
           if (memo != null && memo.isNotEmpty) 'memo': memo,
         }),
       );
@@ -290,11 +280,7 @@ class ApiService {
           errors: null,
         );
       }
-      throw ApiException(
-        statusCode: 0,
-        message: 'ネットワークエラー: $e',
-        errors: null,
-      );
+      throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
   }
 
@@ -314,8 +300,11 @@ class ApiService {
         headers: headers,
         body: jsonEncode({
           'title': title,
-          'scheduled_date': scheduledDate.toIso8601String().split('T')[0], // YYYY-MM-DD形式
-          'scheduled_time': '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00',
+          'scheduled_date': scheduledDate.toIso8601String().split(
+            'T',
+          )[0], // YYYY-MM-DD形式
+          'scheduled_time':
+              '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00',
           if (memo != null && memo.isNotEmpty) 'memo': memo,
         }),
       );
@@ -367,11 +356,7 @@ class ApiService {
           errors: null,
         );
       }
-      throw ApiException(
-        statusCode: 0,
-        message: 'ネットワークエラー: $e',
-        errors: null,
-      );
+      throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
   }
 
@@ -407,11 +392,7 @@ class ApiService {
           errors: null,
         );
       }
-      throw ApiException(
-        statusCode: 0,
-        message: 'ネットワークエラー: $e',
-        errors: null,
-      );
+      throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
   }
 
@@ -425,9 +406,7 @@ class ApiService {
       final response = await http.patch(
         Uri.parse('$_baseUrl/api/tasks/$uuid/complete'),
         headers: headers,
-        body: jsonEncode({
-          'is_completed': isCompleted,
-        }),
+        body: jsonEncode({'is_completed': isCompleted}),
       );
 
       if (response.statusCode == 200) {
@@ -462,11 +441,7 @@ class ApiService {
           errors: null,
         );
       }
-      throw ApiException(
-        statusCode: 0,
-        message: 'ネットワークエラー: $e',
-        errors: null,
-      );
+      throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
   }
 
@@ -501,11 +476,7 @@ class ApiService {
           errors: null,
         );
       }
-      throw ApiException(
-        statusCode: 0,
-        message: 'ネットワークエラー: $e',
-        errors: null,
-      );
+      throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
   }
 
@@ -555,11 +526,7 @@ class ApiService {
           errors: null,
         );
       }
-      throw ApiException(
-        statusCode: 0,
-        message: 'ネットワークエラー: $e',
-        errors: null,
-      );
+      throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
   }
 
@@ -590,11 +557,7 @@ class ApiService {
           errors: null,
         );
       }
-      throw ApiException(
-        statusCode: 0,
-        message: 'ネットワークエラー: $e',
-        errors: null,
-      );
+      throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
   }
 
@@ -613,9 +576,11 @@ class ApiService {
         // レスポンスの形式に応じてデータを取得
         List<dynamic> suggestionsData = [];
         if (responseData is Map<String, dynamic>) {
-          if (responseData.containsKey('data') && responseData['data'] is List) {
+          if (responseData.containsKey('data') &&
+              responseData['data'] is List) {
             suggestionsData = responseData['data'] as List;
-          } else if (responseData.containsKey('result') && responseData['result'] == true) {
+          } else if (responseData.containsKey('result') &&
+              responseData['result'] == true) {
             suggestionsData = responseData['data'] as List? ?? [];
           }
         } else if (responseData is List) {
@@ -656,11 +621,7 @@ class ApiService {
           errors: null,
         );
       }
-      throw ApiException(
-        statusCode: 0,
-        message: 'ネットワークエラー: $e',
-        errors: null,
-      );
+      throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
   }
 
@@ -696,11 +657,7 @@ class ApiService {
           errors: null,
         );
       }
-      throw ApiException(
-        statusCode: 0,
-        message: 'ネットワークエラー: $e',
-        errors: null,
-      );
+      throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
   }
 }

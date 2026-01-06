@@ -85,9 +85,9 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
       initialTime: _selectedTime,
       builder: (BuildContext context, Widget? child) {
         return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            alwaysUse24HourFormat: _settingsService.is24HourFormat,
-          ),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(alwaysUse24HourFormat: _settingsService.is24HourFormat),
           child: child!,
         );
       },
@@ -132,7 +132,9 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
           title: _titleController.text.trim(),
           scheduledDate: _selectedDate,
           scheduledTime: _selectedTime,
-          memo: _memoController.text.trim().isEmpty ? null : _memoController.text.trim(),
+          memo: _memoController.text.trim().isEmpty
+              ? null
+              : _memoController.text.trim(),
         );
 
         if (mounted) {
@@ -156,11 +158,7 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
 
           // フィールドエラーがない場合は、一般的なエラーメッセージを表示
           if (_titleError == null) {
-            _errorHandler.handleError(
-              context,
-              e,
-              contextMessage: '予定作成',
-            );
+            _errorHandler.handleError(context, e, contextMessage: '予定作成');
           } else {
             // フィールドエラーがある場合は、フォームを再検証してエラーを表示
             _formKey.currentState?.validate();
@@ -188,171 +186,167 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
           ),
         ),
         body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // タイトル入力フィールド
-              const Text(
-                'タイトル',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // タイトル入力フィールド
+                const Text(
+                  'タイトル',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  hintText: '予定のタイトルを入力してください',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  errorText: _titleError,
-                ),
-                validator: (value) {
-                  // サーバーからのエラーメッセージがある場合はそれを優先
-                  if (_titleError != null) {
-                    return _titleError;
-                  }
-                  if (value == null || value.isEmpty) {
-                    return 'タイトルを入力してください';
-                  }
-                  if (value.trim().isEmpty) {
-                    return 'タイトルを入力してください';
-                  }
-                  if (value.length > 255) {
-                    return 'タイトルは255文字以内で入力してください';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // 日時選択セクション
-              const Text(
-                '日時',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => _selectDate(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.grey[50],
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.calendar_today, color: Colors.grey),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${_selectedDate.year}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => _selectTime(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.grey[50],
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.access_time, color: Colors.grey),
-                            const SizedBox(width: 8),
-                            Text(
-                              TimeFormatter.formatTime(_selectedTime),
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // メモ入力フィールド
-              const Text(
-                'メモ',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _memoController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: '予定に関するメモを入力してください（任意）',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-              ),
-
-              const Spacer(),
-
-              // 登録ボタン
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _loadingService.isLoading(_loadingOperation) ? null : _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    hintText: '予定のタイトルを入力してください',
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 2,
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                    errorText: _titleError,
                   ),
-                  child: _loadingService.isLoading(_loadingOperation)
-                      ? const SimpleLoadingIndicator(
-                          color: Colors.white,
-                          size: 20,
-                        )
-                      : const Text(
-                          '予定を登録',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                  validator: (value) {
+                    // サーバーからのエラーメッセージがある場合はそれを優先
+                    if (_titleError != null) {
+                      return _titleError;
+                    }
+                    if (value == null || value.isEmpty) {
+                      return 'タイトルを入力してください';
+                    }
+                    if (value.trim().isEmpty) {
+                      return 'タイトルを入力してください';
+                    }
+                    if (value.length > 255) {
+                      return 'タイトルは255文字以内で入力してください';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // 日時選択セクション
+                const Text(
+                  '日時',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _selectDate(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.grey[50],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.calendar_today,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${_selectedDate.year}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ],
                           ),
                         ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _selectTime(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.grey[50],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.access_time, color: Colors.grey),
+                              const SizedBox(width: 8),
+                              Text(
+                                TimeFormatter.formatTime(_selectedTime),
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 24),
+
+                // メモ入力フィールド
+                const Text(
+                  'メモ',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _memoController,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText: '予定に関するメモを入力してください（任意）',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                ),
+
+                const Spacer(),
+
+                // 登録ボタン
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _loadingService.isLoading(_loadingOperation)
+                        ? null
+                        : _submitForm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    child: _loadingService.isLoading(_loadingOperation)
+                        ? const SimpleLoadingIndicator(
+                            color: Colors.white,
+                            size: 20,
+                          )
+                        : const Text(
+                            '予定を登録',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

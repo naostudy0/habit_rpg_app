@@ -10,11 +10,7 @@ void main() {
     });
 
     testWidgets('タスク作成ページが正しく表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: TaskCreatePage(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: TaskCreatePage()));
 
       // タイトルが表示されているか確認
       expect(find.text('新しい予定'), findsOneWidget);
@@ -36,10 +32,7 @@ void main() {
     testWidgets('初期値が設定されている場合、タイトルとメモが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: TaskCreatePage(
-            initialTitle: 'テストタイトル',
-            initialMemo: 'テストメモ',
-          ),
+          home: TaskCreatePage(initialTitle: 'テストタイトル', initialMemo: 'テストメモ'),
         ),
       );
 
@@ -51,11 +44,7 @@ void main() {
     });
 
     testWidgets('タイトルを入力できる', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: TaskCreatePage(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: TaskCreatePage()));
 
       // タイトル入力フィールドを見つける
       final titleField = find.byType(TextFormField).first;
@@ -66,11 +55,7 @@ void main() {
     });
 
     testWidgets('メモを入力できる', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: TaskCreatePage(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: TaskCreatePage()));
 
       // メモ入力フィールドを見つける（2番目のTextFormField）
       final memoField = find.byType(TextFormField).last;
@@ -81,11 +66,7 @@ void main() {
     });
 
     testWidgets('空のタイトルでバリデーションエラーが表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: TaskCreatePage(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: TaskCreatePage()));
 
       // フォームを送信
       final submitButton = find.text('予定を登録');

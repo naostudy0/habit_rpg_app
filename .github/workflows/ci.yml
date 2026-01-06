@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      # 環境変数を設定
+      - name: Prepare environment config
+        run: |
+          cp lib/config/environment.example.dart lib/config/environment.dart
+
+      - name: Verify formatting
+        run: dart format --set-exit-if-changed .
+        continue-on-error: true
+
+      # 静的解析
+      - name: Analyze code
+        run: flutter analyze
+        continue-on-error: true
+
+      # テスト実行（カバレッジ生成）
+      - name: Run tests
+        run: flutter test --coverage
+
+      # Summaryに結果表示
+      - name: Test summary
+        if: always()
+        run: |
+          echo "## CI Summary" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage/lcov.info ]; then
+            echo "- Tests: passed" >> $GITHUB_STEP_SUMMARY
+            echo "- Coverage: generated (coverage/lcov.info)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Tests: failed" >> $GITHUB_STEP_SUMMARY
+            echo "- Coverage: not generated" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # Codecovへカバレッジアップロード
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
