@@ -5,6 +5,8 @@ import 'task_calendar_page.dart';
 import 'settings_page.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import '../services/error_handler.dart';
+import '../models/task_suggestion.dart';
 
 class MyPageTop extends StatefulWidget {
   const MyPageTop({super.key});
@@ -16,6 +18,7 @@ class MyPageTop extends StatefulWidget {
 class _MyPageTopState extends State<MyPageTop> {
   final ApiService _apiService = ApiService();
   final AuthService _authService = AuthService();
+  final ErrorHandler _errorHandler = ErrorHandler();
   bool _isAuthenticated = false;
   bool _isCheckingAuth = true;
   String _userName = 'ユーザー';
@@ -47,7 +50,133 @@ class _MyPageTopState extends State<MyPageTop> {
             (route) => false,
           );
         });
+      } else {
+        // 認証されている場合は、AI提案予定を取得
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _checkTaskSuggestions();
+        });
       }
+    }
+  }
+
+  Future<void> _checkTaskSuggestions() async {
+    try {
+      final suggestions = await _apiService.getTaskSuggestions();
+
+      if (mounted && suggestions.isNotEmpty) {
+        // 最初の提案を表示
+        final suggestion = suggestions.first;
+        _showSuggestionDialog(suggestion);
+      }
+    } catch (e) {
+      // エラーは無視（提案がない場合もエラーになる可能性があるため）
+      // ignore: avoid_print
+      print('AI提案予定の取得エラー: $e');
+    }
+  }
+
+  Future<void> _showSuggestionDialog(TaskSuggestion suggestion) async {
+    if (!mounted) return;
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.lightbulb, color: Colors.amber),
+              SizedBox(width: 8),
+              Text('AIからの提案'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '以下の予定を追加しますか？',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      suggestion.title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (suggestion.memo != null && suggestion.memo!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        suggestion.memo!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                // NGを選択した場合、提案を削除
+                Navigator.of(context).pop(false);
+                await _deleteSuggestion(suggestion);
+              },
+              child: const Text(
+                'NG',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true && mounted) {
+      // OKを選択した場合、予定追加画面に遷移
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TaskCreatePage(
+            initialTitle: suggestion.title,
+            initialMemo: suggestion.memo,
+          ),
+        ),
+      ).then((_) {
+        // 予定追加画面から戻ってきたら、提案を削除
+        _deleteSuggestion(suggestion);
+      });
+    }
+  }
+
+  Future<void> _deleteSuggestion(TaskSuggestion suggestion) async {
+    try {
+      await _apiService.deleteTaskSuggestion(suggestion.uuid);
+    } catch (e) {
+      // エラーは無視（既に削除されている可能性があるため）
+      // ignore: avoid_print
+      print('AI提案予定の削除エラー: $e');
     }
   }
 
