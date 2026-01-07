@@ -1,15 +1,17 @@
 # Habit RPG App
 
-AIがあなたの過去の行動から「続けられる習慣」を提案する、RPG風 習慣管理アプリ
+AIがあなたの過去の行動から「続けられる習慣」を提案する、RPG風 習慣管理アプリ  
 （ポートフォリオ）
 
 ## 概要
 
 Habit RPG Appは、日々の習慣や予定をRPG要素で楽しく管理できるFlutterアプリです。
+
 最大の特徴は、Docker上で動作するLLM（大規模言語モデル）を用いて、過去の予定データを分析し、その人に合った新しい習慣・予定をAIが提案する点です。
 
 本アプリは AI駆動開発の学習・実践 を目的として個人で開発したポートフォリオであり、
 バックエンド（Laravel / Docker / AI連携）を主軸に設計・実装しています。
+
 
 - AIによる予定生成ロジックは Laravel側で実装
 - Flutterは主にUI・API連携を担当（※バックエンドエンジニアのため、Flutterの実装は必要十分レベル）
@@ -99,7 +101,7 @@ Docker上のLLM
 ### 1. リポジトリのクローン
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/naostudy0/habit_rpg_app.git
 cd habit_rpg_app
 ```
 
