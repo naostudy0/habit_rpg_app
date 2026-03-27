@@ -13,6 +13,8 @@ class RegistrationFlowService extends ChangeNotifier {
   factory RegistrationFlowService() => _instance;
   RegistrationFlowService._internal();
 
+  final Set<VoidCallback> _trackedListeners = <VoidCallback>{};
+
   @override
   // ignore: must_call_super
   void dispose() {
@@ -22,7 +24,35 @@ class RegistrationFlowService extends ChangeNotifier {
 
   // ignore: unused_element
   void _disposeInternal() {
+    removeAllListeners();
     super.dispose();
+  }
+
+  @override
+  void addListener(VoidCallback listener) {
+    super.addListener(listener);
+    _trackedListeners.add(listener);
+  }
+
+  @override
+  void removeListener(VoidCallback listener) {
+    super.removeListener(listener);
+    _trackedListeners.remove(listener);
+  }
+
+  /// 登録解除コールバック付きで listener を登録
+  VoidCallback registerListener(VoidCallback listener) {
+    addListener(listener);
+    return () => removeListener(listener);
+  }
+
+  /// 登録済み listener を全解除
+  void removeAllListeners() {
+    final listeners = _trackedListeners.toList();
+    for (final listener in listeners) {
+      super.removeListener(listener);
+    }
+    _trackedListeners.clear();
   }
 
   RegistrationStep _currentStep = RegistrationStep.emailInput;
