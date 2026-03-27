@@ -13,6 +13,18 @@ class RegistrationFlowService extends ChangeNotifier {
   factory RegistrationFlowService() => _instance;
   RegistrationFlowService._internal();
 
+  @override
+  // ignore: must_call_super
+  void dispose() {
+    // singleton のため外部から dispose されると以降の notifyListeners が壊れる。
+    // 外部呼び出しは no-op にして保護する。
+  }
+
+  // ignore: unused_element
+  void _disposeInternal() {
+    super.dispose();
+  }
+
   RegistrationStep _currentStep = RegistrationStep.emailInput;
   String _email = '';
   String? _registrationToken;
@@ -105,6 +117,7 @@ class RegistrationFlowService extends ChangeNotifier {
         return;
       case RegistrationStep.otpVerification:
         _registrationToken = null;
+        _resendAvailableAt = null;
         _currentStep = RegistrationStep.emailInput;
         notifyListeners();
         return;

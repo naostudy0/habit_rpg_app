@@ -65,15 +65,17 @@ void main() {
     });
 
     test('otpVerificationから戻るとemailInputに戻る', () {
+      final resendAt = DateTime.now().add(const Duration(seconds: 60));
       service.moveToOtpVerification(
         email: 'user@example.com',
-        resendAvailableAt: DateTime.now(),
+        resendAvailableAt: resendAt,
       );
 
       service.goBack();
 
       expect(service.currentStep, RegistrationStep.emailInput);
       expect(service.email, 'user@example.com');
+      expect(service.resendAvailableAt, isNull);
     });
 
     test('本登録完了でcompletedに遷移し機密状態をクリアする', () {
@@ -113,6 +115,19 @@ void main() {
     test('singletonとして同じインスタンスを返す', () {
       final another = RegistrationFlowService();
       expect(identical(service, another), true);
+    });
+
+    test('dispose呼び出し後もsingletonの状態更新が可能', () {
+      var notifyCount = 0;
+      service.addListener(() {
+        notifyCount++;
+      });
+
+      service.dispose();
+      service.setEmail('user@example.com');
+
+      expect(service.email, 'user@example.com');
+      expect(notifyCount, 1);
     });
   });
 }
