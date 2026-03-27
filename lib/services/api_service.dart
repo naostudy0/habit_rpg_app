@@ -769,6 +769,12 @@ class ApiService {
     required String defaultSuccessMessage,
     required String defaultErrorMessage,
   }) async {
+    var statusCode = 0;
+    var status = RegistrationApiStatus.networkError;
+    var isSuccess = false;
+    String fallbackMessage() =>
+        isSuccess ? defaultSuccessMessage : defaultErrorMessage;
+
     try {
       final headers = await _headers;
       final response = await http
@@ -779,17 +785,16 @@ class ApiService {
           )
           .timeout(const Duration(seconds: 15));
 
+      statusCode = response.statusCode;
+      status = normalizeRegistrationApiStatus(statusCode);
+      isSuccess = successStatusCodes.contains(statusCode);
+
       final responseData = _decodeJsonObject(response.body);
-      final status = normalizeRegistrationApiStatus(response.statusCode);
-      final isSuccess = successStatusCodes.contains(response.statusCode);
 
       return RegistrationApiResult(
-        statusCode: response.statusCode,
+        statusCode: statusCode,
         status: status,
-        message: _extractMessage(
-          responseData,
-          fallback: isSuccess ? defaultSuccessMessage : defaultErrorMessage,
-        ),
+        message: _extractMessage(responseData, fallback: fallbackMessage()),
         data: _extractDataMap(responseData),
         errors: _extractErrorsMap(responseData),
       );
@@ -799,18 +804,17 @@ class ApiService {
         status: RegistrationApiStatus.networkError,
         message: '通信がタイムアウトしました。時間をおいて再度お試しください。',
       );
-    } catch (e) {
-      if (e is FormatException) {
-        return RegistrationApiResult(
-          statusCode: 0,
-          status: RegistrationApiStatus.networkError,
-          message: 'サーバーからの応答を解析できませんでした',
-        );
-      }
+    } on FormatException {
       return RegistrationApiResult(
-        statusCode: 0,
-        status: RegistrationApiStatus.networkError,
-        message: 'ネットワークエラー: $e',
+        statusCode: statusCode,
+        status: status,
+        message: fallbackMessage(),
+      );
+    } catch (_) {
+      return RegistrationApiResult(
+        statusCode: statusCode,
+        status: status,
+        message: fallbackMessage(),
       );
     }
   }
