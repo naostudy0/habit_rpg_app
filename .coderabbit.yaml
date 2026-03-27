@@ -1,0 +1,48 @@
+language: ja
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  review_details: true
+  poem: false
+  collapse_walkthrough: true
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - ".*"
+
+  path_filters:
+    - "!**/*.g.dart"
+    - "!**/*.freezed.dart"
+    - "!**/*.gen.dart"
+    - "!**/*.gr.dart"
+    - "!**/generated/**"
+    - "!build/**"
+    - "!ios/Pods/**"
+    - "!android/.gradle/**"
+    - "!pubspec.lock"
+
+  path_instructions:
+    - path: "lib/**"
+      instructions: |
+        Flutter/Dart のレビューでは、細かな命名やスタイルよりも次を優先してください。
+        - null safety の抜け漏れ
+        - async/await と例外処理の不備
+        - controller / focusNode / stream subscription などの dispose 漏れ
+        - async の後に BuildContext を危険に使っていないか
+        - dispose 後の setState や参照など、ライフサイクル起因の不具合
+        - build メソッド内で重い処理をしていないか
+        - ユーザー操作時の状態遷移やエラーハンドリングの抜け
+        analyzer / flutter_lints / formatter で検出できる細かなスタイル指摘は優先度を下げてください。
+
+    - path: "test/**"
+      instructions: |
+        テストでは次を優先してください。
+        - 正常系だけでなく失敗系・境界値の不足
+        - 状態変化の前後が検証されているか
+        - 非同期テストが不安定になりやすい書き方になっていないか
+        - Widget test が実装詳細に依存しすぎていないか
