@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -770,11 +771,13 @@ class ApiService {
   }) async {
     try {
       final headers = await _headers;
-      final response = await http.post(
-        Uri.parse('$_baseUrl$endpoint'),
-        headers: headers,
-        body: jsonEncode(body),
-      );
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl$endpoint'),
+            headers: headers,
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 15));
 
       final responseData = _decodeJsonObject(response.body);
       final status = normalizeRegistrationApiStatus(response.statusCode);
@@ -789,6 +792,12 @@ class ApiService {
         ),
         data: _extractDataMap(responseData),
         errors: _extractErrorsMap(responseData),
+      );
+    } on TimeoutException {
+      return const RegistrationApiResult(
+        statusCode: 0,
+        status: RegistrationApiStatus.networkError,
+        message: '通信がタイムアウトしました。時間をおいて再度お試しください。',
       );
     } catch (e) {
       if (e is FormatException) {
