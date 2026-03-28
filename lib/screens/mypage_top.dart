@@ -5,7 +5,6 @@ import 'task_calendar_page.dart';
 import 'settings_page.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
-import '../services/error_handler.dart';
 import '../models/task_suggestion.dart';
 
 class MyPageTop extends StatefulWidget {
@@ -18,7 +17,6 @@ class MyPageTop extends StatefulWidget {
 class _MyPageTopState extends State<MyPageTop> {
   final ApiService _apiService = ApiService();
   final AuthService _authService = AuthService();
-  final ErrorHandler _errorHandler = ErrorHandler();
   bool _isAuthenticated = false;
   bool _isCheckingAuth = true;
   String _userName = 'ユーザー';
@@ -232,7 +230,7 @@ class _MyPageTopState extends State<MyPageTop> {
                     children: [
                       CircleAvatar(
                         radius: 30,
-                        backgroundColor: Colors.white.withOpacity(0.3),
+                        backgroundColor: Colors.white.withValues(alpha: 0.3),
                         child: const Icon(
                           Icons.person,
                           size: 35,

@@ -43,10 +43,7 @@ class TopPage extends StatelessWidget {
               onPressed: () {
                 Navigator.pushNamed(context, '/register');
               },
-              child: const Text(
-                '新規登録',
-                style: TextStyle(fontSize: 16),
-              ),
+              child: const Text('新規登録', style: TextStyle(fontSize: 16)),
             ),
           ],
         ),

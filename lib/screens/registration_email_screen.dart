@@ -63,10 +63,7 @@ class _RegistrationEmailScreenState extends State<RegistrationEmailScreen> {
         final resendAt =
             parseResendAvailableAtFromData(result.data) ??
             DateTime.now().add(_defaultResendCooldown);
-        _flow.moveToOtpVerification(
-          email: email,
-          resendAvailableAt: resendAt,
-        );
+        _flow.moveToOtpVerification(email: email, resendAvailableAt: resendAt);
         return;
       }
 

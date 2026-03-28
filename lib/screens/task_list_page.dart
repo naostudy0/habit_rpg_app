@@ -865,10 +865,10 @@ class _TaskListPageState extends State<TaskListPage> {
                   height: 50,
                   decoration: BoxDecoration(
                     color: task.isCompleted
-                        ? Colors.green.withOpacity(0.2)
+                        ? Colors.green.withValues(alpha: 0.2)
                         : Theme.of(
                             context,
-                          ).colorScheme.primary.withOpacity(0.2),
+                          ).colorScheme.primary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: isCompleting
