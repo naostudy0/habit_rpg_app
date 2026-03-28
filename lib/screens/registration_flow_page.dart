@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/loading_service.dart';
 import '../services/registration_flow_service.dart';
 import 'registration_email_screen.dart';
 import 'registration_otp_screen.dart';
@@ -14,6 +15,9 @@ class RegistrationFlowPage extends StatefulWidget {
 
 class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
   final RegistrationFlowService _flow = RegistrationFlowService();
+  final LoadingService _loadingService = LoadingService();
+
+  bool get _isLoading => _loadingService.isAnyLoading;
 
   @override
   void initState() {
@@ -31,6 +35,9 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
     if (didPop) {
       return;
     }
+    if (_isLoading) {
+      return;
+    }
     if (_flow.canGoBack) {
       _flow.goBack();
     } else {
@@ -41,36 +48,34 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: _flow,
+      listenable: Listenable.merge([_flow, _loadingService]),
       builder: (context, _) {
         final step = _flow.currentStep;
         final canPopRoute =
             step == RegistrationStep.emailInput ||
             step == RegistrationStep.completed;
+        final canPop = canPopRoute && !_isLoading;
 
         return PopScope(
-          canPop: canPopRoute,
+          canPop: canPop,
           onPopInvokedWithResult: _handlePopInvoked,
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             switchInCurve: Curves.easeOut,
             switchOutCurve: Curves.easeIn,
             child: switch (step) {
-              RegistrationStep.emailInput =>
-                const KeyedSubtree(
-                  key: ValueKey('reg_email'),
-                  child: RegistrationEmailScreen(),
-                ),
-              RegistrationStep.otpVerification =>
-                const KeyedSubtree(
-                  key: ValueKey('reg_otp'),
-                  child: RegistrationOtpScreen(),
-                ),
-              RegistrationStep.passwordSetup =>
-                const KeyedSubtree(
-                  key: ValueKey('reg_password'),
-                  child: RegistrationPasswordSetupScreen(),
-                ),
+              RegistrationStep.emailInput => const KeyedSubtree(
+                key: ValueKey('reg_email'),
+                child: RegistrationEmailScreen(),
+              ),
+              RegistrationStep.otpVerification => const KeyedSubtree(
+                key: ValueKey('reg_otp'),
+                child: RegistrationOtpScreen(),
+              ),
+              RegistrationStep.passwordSetup => const KeyedSubtree(
+                key: ValueKey('reg_password'),
+                child: RegistrationPasswordSetupScreen(),
+              ),
               RegistrationStep.completed => const KeyedSubtree(
                 key: ValueKey('reg_done'),
                 child: SizedBox.shrink(),

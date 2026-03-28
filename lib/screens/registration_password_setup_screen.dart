@@ -24,7 +24,9 @@ class _RegistrationPasswordSetupScreenState
 
   static const String _loadingOperation = 'registration_complete';
 
-  String? _serverError;
+  String? _serverErrorName;
+  String? _serverErrorPassword;
+  String? _formError;
   bool _obscurePassword = true;
   bool _obscurePasswordConfirm = true;
 
@@ -44,12 +46,16 @@ class _RegistrationPasswordSetupScreenState
     final token = _flow.registrationToken;
     if (token == null || token.isEmpty) {
       setState(() {
-        _serverError = 'セッションが無効です。最初からやり直してください。';
+        _formError = 'セッションが無効です。最初からやり直してください。';
       });
       return;
     }
 
-    setState(() => _serverError = null);
+    setState(() {
+      _serverErrorName = null;
+      _serverErrorPassword = null;
+      _formError = null;
+    });
     _loadingService.setLoading(_loadingOperation, true);
 
     try {
@@ -71,40 +77,46 @@ class _RegistrationPasswordSetupScreenState
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/login', (route) => false);
         return;
       }
 
-      setState(() {
-        _serverError = _messageForCompleteFailure(result);
-      });
+      setState(() => _applyCompleteFailure(result));
     } catch (e, st) {
       debugPrint('completeRegistration failed: $e\n$st');
       if (!mounted) {
         return;
       }
       setState(() {
-        _serverError = '会員登録に失敗しました。時間をおいて再度お試しください。';
+        _formError = '会員登録に失敗しました。時間をおいて再度お試しください。';
       });
     } finally {
       _loadingService.setLoading(_loadingOperation, false);
     }
   }
 
-  String _messageForCompleteFailure(RegistrationApiResult result) {
+  void _applyCompleteFailure(RegistrationApiResult result) {
+    _serverErrorName = null;
+    _serverErrorPassword = null;
+    _formError = null;
+
     if (result.isValidationError) {
-      final nameErr = _fieldError(result, 'name');
-      if (nameErr != null) {
-        return nameErr;
+      _serverErrorName = _fieldError(result, 'name');
+      _serverErrorPassword = _fieldError(result, 'password');
+      if (_serverErrorName == null && _serverErrorPassword == null) {
+        _formError = result.message.isNotEmpty
+            ? result.message
+            : '入力内容を確認してください。';
       }
-      final passErr = _fieldError(result, 'password');
-      if (passErr != null) {
-        return passErr;
-      }
-      return result.message.isNotEmpty
-          ? result.message
-          : '入力内容を確認してください。';
+      return;
     }
+
+    _formError = _nonFieldMessageForCompleteFailure(result);
+  }
+
+  String _nonFieldMessageForCompleteFailure(RegistrationApiResult result) {
     if (result.isTooManyRequests) {
       return result.message.isNotEmpty
           ? result.message
@@ -115,9 +127,7 @@ class _RegistrationPasswordSetupScreenState
           ? result.message
           : '通信に失敗しました。接続を確認してください。';
     }
-    return result.message.isNotEmpty
-        ? result.message
-        : '会員登録に失敗しました。';
+    return result.message.isNotEmpty ? result.message : '会員登録に失敗しました。';
   }
 
   String? _fieldError(RegistrationApiResult result, String field) {
@@ -157,20 +167,39 @@ class _RegistrationPasswordSetupScreenState
                   '表示名とパスワードを設定して登録を完了してください。',
                   style: TextStyle(fontSize: 16),
                 ),
+                if (_formError != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _formError!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 TextFormField(
                   controller: _nameController,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: '表示名',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.person),
+                    errorText: _serverErrorName,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return '表示名を入力してください';
                     }
                     return null;
+                  },
+                  onChanged: (_) {
+                    if (_serverErrorName != null || _formError != null) {
+                      setState(() {
+                        _serverErrorName = null;
+                        _formError = null;
+                      });
+                    }
                   },
                 ),
                 const SizedBox(height: 16),
@@ -181,7 +210,7 @@ class _RegistrationPasswordSetupScreenState
                     labelText: 'パスワード',
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock),
-                    errorText: _serverError,
+                    errorText: _serverErrorPassword,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -203,8 +232,11 @@ class _RegistrationPasswordSetupScreenState
                     return null;
                   },
                   onChanged: (_) {
-                    if (_serverError != null) {
-                      setState(() => _serverError = null);
+                    if (_serverErrorPassword != null || _formError != null) {
+                      setState(() {
+                        _serverErrorPassword = null;
+                        _formError = null;
+                      });
                     }
                   },
                 ),
@@ -224,7 +256,8 @@ class _RegistrationPasswordSetupScreenState
                       ),
                       onPressed: () {
                         setState(
-                          () => _obscurePasswordConfirm = !_obscurePasswordConfirm,
+                          () => _obscurePasswordConfirm =
+                              !_obscurePasswordConfirm,
                         );
                       },
                     ),

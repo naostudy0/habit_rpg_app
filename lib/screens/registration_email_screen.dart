@@ -19,6 +19,7 @@ class _RegistrationEmailScreenState extends State<RegistrationEmailScreen> {
   final _apiService = ApiService();
   final _loadingService = LoadingService();
   final _flow = RegistrationFlowService();
+  late final VoidCallback _emailListener;
 
   static const String _loadingOperation = 'registration_send_otp';
   static const Duration _defaultResendCooldown = Duration(seconds: 60);
@@ -26,7 +27,18 @@ class _RegistrationEmailScreenState extends State<RegistrationEmailScreen> {
   String? _serverError;
 
   @override
+  void initState() {
+    super.initState();
+    _emailController.text = _flow.email;
+    _emailListener = () {
+      _flow.setEmail(_emailController.text);
+    };
+    _emailController.addListener(_emailListener);
+  }
+
+  @override
   void dispose() {
+    _emailController.removeListener(_emailListener);
     _emailController.dispose();
     super.dispose();
   }

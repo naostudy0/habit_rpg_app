@@ -13,6 +13,15 @@ void main() {
       expect(at, DateTime.parse('2026-03-27T12:01:00.000Z'));
     });
 
+    test('壊れた resend_available_at は retry_after にフォールバックする', () {
+      final ref = DateTime.utc(2026, 3, 27, 12, 0, 0);
+      final at = parseResendAvailableAtFromData(
+        {'resend_available_at': 'not-a-date', 'retry_after': 45},
+        reference: ref,
+      );
+      expect(at, ref.add(const Duration(seconds: 45)));
+    });
+
     test('retry_after が秒数のとき reference から加算する', () {
       final ref = DateTime.utc(2026, 3, 27, 12, 0, 0);
       final at = parseResendAvailableAtFromData(
