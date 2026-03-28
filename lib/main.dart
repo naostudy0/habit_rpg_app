@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/top_page.dart';
 import 'screens/login_page.dart';
+import 'screens/registration_flow_page.dart';
 import 'screens/mypage.dart';
 import 'screens/mypage_top.dart';
 import 'services/auth_service.dart';
@@ -60,6 +61,7 @@ class _MyAppState extends State<MyApp> {
       routes: {
         '/': (context) => const AuthCheckWrapper(child: TopPage()),
         '/login': (context) => const LoginPage(),
+        '/register': (context) => const RegistrationFlowPage(),
         '/mypage': (context) => const MyPage(),
         '/mypage_top': (context) => const MyPageTop(),
       },
@@ -80,7 +82,6 @@ class AuthCheckWrapper extends StatefulWidget {
 class _AuthCheckWrapperState extends State<AuthCheckWrapper> {
   final AuthService _authService = AuthService();
   bool _isChecking = true;
-  bool _isAuthenticated = false;
 
   @override
   void initState() {
@@ -93,7 +94,6 @@ class _AuthCheckWrapperState extends State<AuthCheckWrapper> {
 
     if (mounted) {
       setState(() {
-        _isAuthenticated = isAuthenticated;
         _isChecking = false;
       });
 

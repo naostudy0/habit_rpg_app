@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -63,6 +64,62 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+/// 会員登録APIのステータス正規化
+enum RegistrationApiStatus {
+  success,
+  created,
+  conflict,
+  unprocessableEntity,
+  tooManyRequests,
+  networkError,
+  unknownError,
+}
+
+RegistrationApiStatus normalizeRegistrationApiStatus(int statusCode) {
+  switch (statusCode) {
+    case 200:
+      return RegistrationApiStatus.success;
+    case 201:
+      return RegistrationApiStatus.created;
+    case 409:
+      return RegistrationApiStatus.conflict;
+    case 422:
+      return RegistrationApiStatus.unprocessableEntity;
+    case 429:
+      return RegistrationApiStatus.tooManyRequests;
+    case 0:
+      return RegistrationApiStatus.networkError;
+    default:
+      return RegistrationApiStatus.unknownError;
+  }
+}
+
+/// 会員登録APIの正規化済みレスポンス
+class RegistrationApiResult {
+  final int statusCode;
+  final RegistrationApiStatus status;
+  final String message;
+  final Map<String, dynamic>? data;
+  final Map<String, dynamic>? errors;
+
+  const RegistrationApiResult({
+    required this.statusCode,
+    required this.status,
+    required this.message,
+    this.data,
+    this.errors,
+  });
+
+  bool get isSuccess =>
+      status == RegistrationApiStatus.success ||
+      status == RegistrationApiStatus.created;
+
+  bool get isConflict => status == RegistrationApiStatus.conflict;
+  bool get isValidationError =>
+      status == RegistrationApiStatus.unprocessableEntity;
+  bool get isTooManyRequests => status == RegistrationApiStatus.tooManyRequests;
+}
+
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
@@ -90,11 +147,12 @@ class ApiService {
   // ログインAPI
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
+      final normalizedEmail = email.trim();
       final headers = await _headers;
       final response = await http.post(
         Uri.parse('$_baseUrl/api/auth/login'),
         headers: headers,
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode({'email': normalizedEmail, 'password': password}),
       );
 
       if (response.statusCode == 200) {
@@ -144,6 +202,53 @@ class ApiService {
       }
       throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
+  }
+
+  // 会員登録OTP送信API
+  Future<RegistrationApiResult> sendRegistrationOtp(String email) async {
+    final normalizedEmail = email.trim();
+    return _postRegistrationApi(
+      endpoint: '/api/auth/register/otp/send',
+      body: {'email': normalizedEmail},
+      successStatusCodes: const {200},
+      defaultSuccessMessage: 'ワンタイムパスワードを送信しました。',
+      defaultErrorMessage: 'ワンタイムパスワードの送信に失敗しました。',
+    );
+  }
+
+  // 会員登録OTP検証API
+  Future<RegistrationApiResult> verifyRegistrationOtp({
+    required String email,
+    required String otp,
+  }) async {
+    final normalizedEmail = email.trim();
+    return _postRegistrationApi(
+      endpoint: '/api/auth/register/otp/verify',
+      body: {'email': normalizedEmail, 'otp': otp},
+      successStatusCodes: const {200},
+      defaultSuccessMessage: 'ワンタイムパスワードを検証しました。',
+      defaultErrorMessage: 'ワンタイムパスワードの検証に失敗しました。',
+    );
+  }
+
+  // 会員登録完了API
+  Future<RegistrationApiResult> completeRegistration({
+    required String registrationToken,
+    required String name,
+    required String password,
+  }) async {
+    final normalizedName = name.trim();
+    return _postRegistrationApi(
+      endpoint: '/api/auth/register/complete',
+      body: {
+        'registration_token': registrationToken,
+        'name': normalizedName,
+        'password': password,
+      },
+      successStatusCodes: const {201},
+      defaultSuccessMessage: '会員登録が完了しました。',
+      defaultErrorMessage: '会員登録に失敗しました。',
+    );
   }
 
   // ログアウトAPI
@@ -493,7 +598,7 @@ class ApiService {
       final body = <String, dynamic>{};
 
       if (name != null) body['name'] = name;
-      if (email != null) body['email'] = email;
+      if (email != null) body['email'] = email.trim();
       if (password != null) body['password'] = password;
       if (isDarkMode != null) body['is_dark_mode'] = isDarkMode;
       if (is24HourFormat != null) body['is_24_hour_format'] = is24HourFormat;
@@ -659,5 +764,112 @@ class ApiService {
       }
       throw ApiException(statusCode: 0, message: 'ネットワークエラー: $e', errors: null);
     }
+  }
+
+  Future<RegistrationApiResult> _postRegistrationApi({
+    required String endpoint,
+    required Map<String, dynamic> body,
+    required Set<int> successStatusCodes,
+    required String defaultSuccessMessage,
+    required String defaultErrorMessage,
+  }) async {
+    var statusCode = 0;
+    var status = RegistrationApiStatus.networkError;
+    var isSuccess = false;
+    String fallbackMessage() =>
+        isSuccess ? defaultSuccessMessage : defaultErrorMessage;
+
+    try {
+      final headers = await _headers;
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl$endpoint'),
+            headers: headers,
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      statusCode = response.statusCode;
+      status = normalizeRegistrationApiStatus(statusCode);
+      isSuccess = successStatusCodes.contains(statusCode);
+
+      final responseData = _decodeJsonObject(response.body);
+
+      return RegistrationApiResult(
+        statusCode: statusCode,
+        status: status,
+        message: _extractMessage(responseData, fallback: fallbackMessage()),
+        data: _extractDataMap(responseData),
+        errors: _extractErrorsMap(responseData),
+      );
+    } on TimeoutException {
+      return const RegistrationApiResult(
+        statusCode: 0,
+        status: RegistrationApiStatus.networkError,
+        message: '通信がタイムアウトしました。時間をおいて再度お試しください。',
+      );
+    } on FormatException {
+      return RegistrationApiResult(
+        statusCode: statusCode,
+        status: status,
+        message: fallbackMessage(),
+      );
+    } catch (_) {
+      return RegistrationApiResult(
+        statusCode: statusCode,
+        status: status,
+        message: fallbackMessage(),
+      );
+    }
+  }
+
+  Map<String, dynamic> _decodeJsonObject(String body) {
+    if (body.isEmpty) {
+      return {};
+    }
+
+    final decoded = jsonDecode(body);
+    if (decoded is Map<String, dynamic>) {
+      return decoded;
+    }
+
+    if (decoded is Map) {
+      return decoded.map((key, value) => MapEntry(key.toString(), value));
+    }
+
+    return {};
+  }
+
+  String _extractMessage(
+    Map<String, dynamic> responseData, {
+    required String fallback,
+  }) {
+    final message = responseData['message'];
+    if (message is String && message.isNotEmpty) {
+      return message;
+    }
+    return fallback;
+  }
+
+  Map<String, dynamic>? _extractDataMap(Map<String, dynamic> responseData) {
+    final data = responseData['data'];
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+    if (data is Map) {
+      return data.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return null;
+  }
+
+  Map<String, dynamic>? _extractErrorsMap(Map<String, dynamic> responseData) {
+    final errors = responseData['errors'];
+    if (errors is Map<String, dynamic>) {
+      return errors;
+    }
+    if (errors is Map) {
+      return errors.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return null;
   }
 }

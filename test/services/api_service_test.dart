@@ -39,4 +39,64 @@ void main() {
       expect(exception.getAllErrorMessages().length, 2);
     });
   });
+
+  group('RegistrationApiStatus', () {
+    test('会員登録APIのステータスコードを正規化できる', () {
+      expect(
+        normalizeRegistrationApiStatus(200),
+        RegistrationApiStatus.success,
+      );
+      expect(
+        normalizeRegistrationApiStatus(201),
+        RegistrationApiStatus.created,
+      );
+      expect(
+        normalizeRegistrationApiStatus(409),
+        RegistrationApiStatus.conflict,
+      );
+      expect(
+        normalizeRegistrationApiStatus(422),
+        RegistrationApiStatus.unprocessableEntity,
+      );
+      expect(
+        normalizeRegistrationApiStatus(429),
+        RegistrationApiStatus.tooManyRequests,
+      );
+      expect(
+        normalizeRegistrationApiStatus(0),
+        RegistrationApiStatus.networkError,
+      );
+      expect(
+        normalizeRegistrationApiStatus(500),
+        RegistrationApiStatus.unknownError,
+      );
+    });
+  });
+
+  group('RegistrationApiResult', () {
+    test('画面判定用のヘルパーが正しく動作する', () {
+      const createdResult = RegistrationApiResult(
+        statusCode: 201,
+        status: RegistrationApiStatus.created,
+        message: '会員登録が完了しました。',
+      );
+      const conflictResult = RegistrationApiResult(
+        statusCode: 409,
+        status: RegistrationApiStatus.conflict,
+        message: 'このメールアドレスはすでに登録されています。',
+      );
+      const tooManyRequestsResult = RegistrationApiResult(
+        statusCode: 429,
+        status: RegistrationApiStatus.tooManyRequests,
+        message: '再送上限に達しました。',
+      );
+
+      expect(createdResult.isSuccess, true);
+      expect(createdResult.isConflict, false);
+      expect(conflictResult.isSuccess, false);
+      expect(conflictResult.isConflict, true);
+      expect(tooManyRequestsResult.isTooManyRequests, true);
+      expect(tooManyRequestsResult.isValidationError, false);
+    });
+  });
 }
