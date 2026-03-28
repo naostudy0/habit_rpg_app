@@ -78,6 +78,14 @@ class _RegistrationPasswordSetupScreenState
       setState(() {
         _serverError = _messageForCompleteFailure(result);
       });
+    } catch (e, st) {
+      debugPrint('completeRegistration failed: $e\n$st');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _serverError = '会員登録に失敗しました。時間をおいて再度お試しください。';
+      });
     } finally {
       _loadingService.setLoading(_loadingOperation, false);
     }

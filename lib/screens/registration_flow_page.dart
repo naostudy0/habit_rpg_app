@@ -21,6 +21,12 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
     _flow.reset();
   }
 
+  @override
+  void dispose() {
+    _flow.dispose();
+    super.dispose();
+  }
+
   void _handlePopInvoked(bool didPop, Object? result) {
     if (didPop) {
       return;

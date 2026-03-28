@@ -61,6 +61,14 @@ class _RegistrationEmailScreenState extends State<RegistrationEmailScreen> {
       setState(() {
         _serverError = registrationSendOtpErrorMessage(result);
       });
+    } catch (e, st) {
+      debugPrint('sendRegistrationOtp failed: $e\n$st');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _serverError = 'ワンタイムパスワードの送信に失敗しました。時間をおいて再度お試しください。';
+      });
     } finally {
       _loadingService.setLoading(_loadingOperation, false);
     }
