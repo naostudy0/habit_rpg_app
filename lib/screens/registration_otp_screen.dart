@@ -124,6 +124,11 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
         return;
       }
 
+      final resendAt = parseResendAvailableAtFromData(result.data);
+      if (resendAt != null) {
+        _flow.updateResendAvailableAt(resendAt);
+      }
+
       setState(() {
         _serverError = registrationSendOtpErrorMessage(result);
       });

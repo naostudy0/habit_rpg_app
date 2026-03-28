@@ -171,11 +171,14 @@ class _RegistrationPasswordSetupScreenState
                     Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton(
-                        onPressed: () {
-                          Navigator.of(
-                            context,
-                          ).pushNamedAndRemoveUntil('/login', (route) => false);
-                        },
+                        onPressed: _loadingService.isLoading(_loadingOperation)
+                            ? null
+                            : () {
+                                Navigator.of(context).pushNamedAndRemoveUntil(
+                                  '/login',
+                                  (route) => false,
+                                );
+                              },
                         child: const Text('ログインへ'),
                       ),
                     ),

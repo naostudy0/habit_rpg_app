@@ -82,7 +82,6 @@ class AuthCheckWrapper extends StatefulWidget {
 class _AuthCheckWrapperState extends State<AuthCheckWrapper> {
   final AuthService _authService = AuthService();
   bool _isChecking = true;
-  bool _isAuthenticated = false;
 
   @override
   void initState() {
@@ -95,7 +94,6 @@ class _AuthCheckWrapperState extends State<AuthCheckWrapper> {
 
     if (mounted) {
       setState(() {
-        _isAuthenticated = isAuthenticated;
         _isChecking = false;
       });
 

@@ -26,7 +26,11 @@ lib/
 │   ├── mypage_top.dart
 │   ├── password_change_page.dart
 │   ├── profile_edit_page.dart
+│   ├── registration_completed_screen.dart
+│   ├── registration_email_screen.dart
 │   ├── registration_flow_page.dart  # RegistrationFlowPage
+│   ├── registration_otp_screen.dart
+│   ├── registration_password_setup_screen.dart
 │   ├── settings_page.dart
 │   ├── task_calendar_page.dart
 │   ├── task_create_page.dart
@@ -41,6 +45,7 @@ lib/
 │   ├── registration_flow_service.dart # RegistrationFlowService
 │   └── settings_service.dart
 ├── utils/               # ユーティリティ
+│   ├── registration_response_parsing.dart
 │   └── time_formatter.dart
 ├── widgets/             # 再利用可能なウィジェット
 │   └── loading_widget.dart  # LoadingWidget, LoadingOverlay, SimpleLoadingIndicator

@@ -237,11 +237,12 @@ class ApiService {
     required String name,
     required String password,
   }) async {
+    final normalizedName = name.trim();
     return _postRegistrationApi(
       endpoint: '/api/auth/register/complete',
       body: {
         'registration_token': registrationToken,
-        'name': name,
+        'name': normalizedName,
         'password': password,
       },
       successStatusCodes: const {201},
