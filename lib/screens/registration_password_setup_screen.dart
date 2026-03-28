@@ -2,10 +2,23 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/loading_service.dart';
 import '../services/registration_flow_service.dart';
+import '../utils/registration_response_parsing.dart';
 import '../widgets/loading_widget.dart';
 
+typedef CompleteRegistrationRequest =
+    Future<RegistrationApiResult> Function({
+      required String registrationToken,
+      required String name,
+      required String password,
+    });
+
 class RegistrationPasswordSetupScreen extends StatefulWidget {
-  const RegistrationPasswordSetupScreen({super.key});
+  final CompleteRegistrationRequest? completeRegistrationRequest;
+
+  const RegistrationPasswordSetupScreen({
+    super.key,
+    this.completeRegistrationRequest,
+  });
 
   @override
   State<RegistrationPasswordSetupScreen> createState() =>
@@ -69,7 +82,10 @@ class _RegistrationPasswordSetupScreenState
     _loadingService.setLoading(_loadingOperation, true);
 
     try {
-      final result = await _apiService.completeRegistration(
+      final completeRegistration =
+          widget.completeRegistrationRequest ??
+          _apiService.completeRegistration;
+      final result = await completeRegistration(
         registrationToken: token,
         name: _nameController.text.trim(),
         password: _passwordController.text,
@@ -100,58 +116,11 @@ class _RegistrationPasswordSetupScreenState
   }
 
   void _applyCompleteFailure(RegistrationApiResult result) {
-    _serverErrorName = null;
-    _serverErrorPassword = null;
-    _formError = null;
-    _showLoginAction = false;
-
-    if (result.isValidationError) {
-      final hasNameError = _fieldError(result, 'name') != null;
-      final hasPasswordError = _fieldError(result, 'password') != null;
-      if (hasNameError) {
-        _serverErrorName = '表示名を確認して、もう一度入力してください。';
-      }
-      if (hasPasswordError) {
-        _serverErrorPassword = 'パスワードを8文字以上で入力し直してください。';
-      }
-
-      if (_serverErrorName == null && _serverErrorPassword == null) {
-        _formError = '入力内容を確認して、もう一度お試しください。';
-      }
-      return;
-    }
-
-    if (result.isConflict) {
-      _formError = 'このメールアドレスは既に登録済みです。ログイン画面へ進んでください。';
-      _showLoginAction = true;
-      return;
-    }
-
-    _formError = _nonFieldMessageForCompleteFailure(result);
-  }
-
-  String _nonFieldMessageForCompleteFailure(RegistrationApiResult result) {
-    if (result.isTooManyRequests) {
-      return '試行回数の上限に達しました。しばらく待ってからもう一度お試しください。';
-    }
-    if (result.status == RegistrationApiStatus.networkError) {
-      return result.message.isNotEmpty
-          ? result.message
-          : '通信に失敗しました。接続を確認してください。';
-    }
-    return '会員登録に失敗しました。時間をおいて再度お試しください。';
-  }
-
-  String? _fieldError(RegistrationApiResult result, String field) {
-    final errors = result.errors;
-    if (errors == null) {
-      return null;
-    }
-    final list = errors[field];
-    if (list is List && list.isNotEmpty && list.first is String) {
-      return list.first as String;
-    }
-    return null;
+    final ui = mapRegistrationCompleteFailure(result);
+    _serverErrorName = ui.nameError;
+    _serverErrorPassword = ui.passwordError;
+    _formError = ui.formError;
+    _showLoginAction = ui.showLoginAction;
   }
 
   @override
@@ -193,10 +162,9 @@ class _RegistrationPasswordSetupScreenState
                       alignment: Alignment.centerLeft,
                       child: TextButton(
                         onPressed: () {
-                          Navigator.of(context).pushNamedAndRemoveUntil(
-                            '/login',
-                            (route) => false,
-                          );
+                          Navigator.of(
+                            context,
+                          ).pushNamedAndRemoveUntil('/login', (route) => false);
                         },
                         child: const Text('ログインへ'),
                       ),
@@ -219,7 +187,9 @@ class _RegistrationPasswordSetupScreenState
                     return null;
                   },
                   onChanged: (_) {
-                    if (_serverErrorName != null || _formError != null || _showLoginAction) {
+                    if (_serverErrorName != null ||
+                        _formError != null ||
+                        _showLoginAction) {
                       setState(() {
                         _serverErrorName = null;
                         _formError = null;
@@ -258,7 +228,9 @@ class _RegistrationPasswordSetupScreenState
                     return null;
                   },
                   onChanged: (_) {
-                    if (_serverErrorPassword != null || _formError != null || _showLoginAction) {
+                    if (_serverErrorPassword != null ||
+                        _formError != null ||
+                        _showLoginAction) {
                       setState(() {
                         _serverErrorPassword = null;
                         _formError = null;
