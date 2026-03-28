@@ -96,6 +96,18 @@ void main() {
       );
     });
 
+    test('429 は待機と再送を促す文言', () {
+      const r = RegistrationApiResult(
+        statusCode: 429,
+        status: RegistrationApiStatus.tooManyRequests,
+        message: '',
+      );
+      expect(
+        registrationSendOtpErrorMessage(r),
+        '送信が集中しています。しばらく待ってから再送してください。',
+      );
+    });
+
     test('networkError は接続確認の文言', () {
       const r = RegistrationApiResult(
         statusCode: 0,
