@@ -27,6 +27,7 @@ class _RegistrationPasswordSetupScreenState
   String? _serverErrorName;
   String? _serverErrorPassword;
   String? _formError;
+  bool _showLoginAction = false;
   bool _isSubmitting = false;
   bool _obscurePassword = true;
   bool _obscurePasswordConfirm = true;
@@ -63,6 +64,7 @@ class _RegistrationPasswordSetupScreenState
       _serverErrorName = null;
       _serverErrorPassword = null;
       _formError = null;
+      _showLoginAction = false;
     });
     _loadingService.setLoading(_loadingOperation, true);
 
@@ -101,6 +103,7 @@ class _RegistrationPasswordSetupScreenState
     _serverErrorName = null;
     _serverErrorPassword = null;
     _formError = null;
+    _showLoginAction = false;
 
     if (result.isValidationError) {
       final hasNameError = _fieldError(result, 'name') != null;
@@ -120,6 +123,7 @@ class _RegistrationPasswordSetupScreenState
 
     if (result.isConflict) {
       _formError = 'このメールアドレスは既に登録済みです。ログイン画面へ進んでください。';
+      _showLoginAction = true;
       return;
     }
 
@@ -184,6 +188,19 @@ class _RegistrationPasswordSetupScreenState
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  if (_showLoginAction)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                            '/login',
+                            (route) => false,
+                          );
+                        },
+                        child: const Text('ログインへ'),
+                      ),
+                    ),
                 ],
                 const SizedBox(height: 24),
                 TextFormField(
@@ -202,10 +219,11 @@ class _RegistrationPasswordSetupScreenState
                     return null;
                   },
                   onChanged: (_) {
-                    if (_serverErrorName != null || _formError != null) {
+                    if (_serverErrorName != null || _formError != null || _showLoginAction) {
                       setState(() {
                         _serverErrorName = null;
                         _formError = null;
+                        _showLoginAction = false;
                       });
                     }
                   },
@@ -240,10 +258,11 @@ class _RegistrationPasswordSetupScreenState
                     return null;
                   },
                   onChanged: (_) {
-                    if (_serverErrorPassword != null || _formError != null) {
+                    if (_serverErrorPassword != null || _formError != null || _showLoginAction) {
                       setState(() {
                         _serverErrorPassword = null;
                         _formError = null;
+                        _showLoginAction = false;
                       });
                     }
                   },

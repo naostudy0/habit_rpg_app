@@ -95,6 +95,42 @@ void main() {
         'メールアドレスの形式を確認して、もう一度入力してください。',
       );
     });
+
+    test('networkError は接続確認の文言', () {
+      const r = RegistrationApiResult(
+        statusCode: 0,
+        status: RegistrationApiStatus.networkError,
+        message: '',
+      );
+      expect(
+        registrationSendOtpErrorMessage(r),
+        '通信に失敗しました。接続を確認してください。',
+      );
+    });
+
+    test('unknownError はデフォルト失敗文言', () {
+      const r = RegistrationApiResult(
+        statusCode: 500,
+        status: RegistrationApiStatus.unknownError,
+        message: '',
+      );
+      expect(
+        registrationSendOtpErrorMessage(r),
+        'ワンタイムパスワードの送信に失敗しました。時間をおいて再度お試しください。',
+      );
+    });
+
+    test('想定外ステータスコード(418)はデフォルト失敗文言', () {
+      const r = RegistrationApiResult(
+        statusCode: 418,
+        status: RegistrationApiStatus.unknownError,
+        message: '',
+      );
+      expect(
+        registrationSendOtpErrorMessage(r),
+        'ワンタイムパスワードの送信に失敗しました。時間をおいて再度お試しください。',
+      );
+    });
   });
 
   group('registrationVerifyOtpErrorMessage', () {
@@ -122,6 +158,30 @@ void main() {
       expect(
         registrationVerifyOtpErrorMessage(r),
         'コードが正しくないか有効期限切れです。再入力するか、コードを再送してください。',
+      );
+    });
+
+    test('networkError は接続確認の文言', () {
+      const r = RegistrationApiResult(
+        statusCode: 0,
+        status: RegistrationApiStatus.networkError,
+        message: '',
+      );
+      expect(
+        registrationVerifyOtpErrorMessage(r),
+        '通信に失敗しました。接続を確認してください。',
+      );
+    });
+
+    test('unknownError はデフォルト失敗文言', () {
+      const r = RegistrationApiResult(
+        statusCode: 500,
+        status: RegistrationApiStatus.unknownError,
+        message: '',
+      );
+      expect(
+        registrationVerifyOtpErrorMessage(r),
+        'ワンタイムパスワードの検証に失敗しました。時間をおいて再度お試しください。',
       );
     });
   });
