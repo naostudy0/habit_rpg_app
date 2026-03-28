@@ -89,6 +89,85 @@ Authorization: Bearer {token}
 
 **レスポンス** (200 OK): 空のレスポンス
 
+#### 会員登録OTP送信
+
+**エンドポイント**: `POST /api/auth/register/otp/send`
+
+**リクエストボディ**:
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**レスポンス** (200 OK):
+```json
+{
+  "message": "ワンタイムパスワードを送信しました。",
+  "data": {
+    "resend_available_at": "2026-03-27T12:01:00.000Z"
+  }
+}
+```
+
+`data` には `resend_available_at`（ISO8601）または `retry_after`（秒）が返る場合があります。
+
+**エラーレスポンス**:
+- 409 Conflict: 既存アカウント（重複メール）
+- 422 Unprocessable Entity: メール形式不正
+- 429 Too Many Requests: レート制限
+
+#### 会員登録OTP検証
+
+**エンドポイント**: `POST /api/auth/register/otp/verify`
+
+**リクエストボディ**:
+```json
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+```
+
+**レスポンス** (200 OK):
+```json
+{
+  "message": "ワンタイムパスワードを検証しました。",
+  "data": {
+    "registration_token": "reg_token_xxx"
+  }
+}
+```
+
+**エラーレスポンス**:
+- 422 Unprocessable Entity: 誤OTP / 期限切れ
+- 429 Too Many Requests: 試行回数超過
+
+#### 会員登録完了
+
+**エンドポイント**: `POST /api/auth/register/complete`
+
+**リクエストボディ**:
+```json
+{
+  "registration_token": "reg_token_xxx",
+  "name": "ユーザー名",
+  "password": "password123"
+}
+```
+
+**レスポンス** (201 Created):
+```json
+{
+  "message": "会員登録が完了しました。"
+}
+```
+
+**エラーレスポンス**:
+- 409 Conflict: 既存アカウント（重複メール）
+- 422 Unprocessable Entity: name/password バリデーションエラー
+- 429 Too Many Requests: 試行回数超過
+
 ---
 
 ### タスク関連

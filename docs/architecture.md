@@ -180,6 +180,18 @@ Screen (UI更新)
 
 `SettingsService`と`LoadingService`は`ChangeNotifier`を継承しており、`notifyListeners()`を呼び出すことで状態変更を通知します。
 
+## 会員登録フロー（メール認証 + OTP）
+
+会員登録は `/register` を入口に、以下のステップで進行します。
+
+1. メール入力
+2. OTP入力・検証
+3. 表示名/パスワード設定
+4. 完了（ログイン導線）
+
+ステップ状態は `RegistrationFlowService` が保持し、`RegistrationFlowPage` が `currentStep` を監視して画面を切り替えます。  
+詳細仕様（token保持、主要異常系の表示方針、再送クールダウン）は [会員登録フロー仕様](registration_flow.md) を参照してください。
+
 ## 依存関係の注入
 
 シングルトンパターンを使用してサービスを管理しています。
@@ -244,6 +256,7 @@ class ApiException implements Exception {
 routes: {
   '/': (context) => const AuthCheckWrapper(child: TopPage()),
   '/login': (context) => const LoginPage(),
+  '/register': (context) => const RegistrationFlowPage(),
   '/mypage': (context) => const MyPage(),
   '/mypage_top': (context) => const MyPageTop(),
 }
