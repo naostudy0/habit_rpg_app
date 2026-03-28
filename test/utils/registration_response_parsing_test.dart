@@ -59,6 +59,131 @@ void main() {
     });
   });
 
+  group('mapRegistrationCompleteFailure', () {
+    test('成功時はエラーなし', () {
+      const r = RegistrationApiResult(
+        statusCode: 201,
+        status: RegistrationApiStatus.created,
+        message: 'ok',
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, isNull);
+      expect(ui.formError, isNull);
+      expect(ui.showLoginAction, false);
+    });
+
+    test('409 はログイン導線を表示', () {
+      const r = RegistrationApiResult(
+        statusCode: 409,
+        status: RegistrationApiStatus.conflict,
+        message: 'conflict',
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, isNull);
+      expect(ui.formError, 'このメールアドレスは既に登録済みです。ログイン画面へ進んでください。');
+      expect(ui.showLoginAction, true);
+    });
+
+    test('422(name) は表示名エラーを返す', () {
+      const r = RegistrationApiResult(
+        statusCode: 422,
+        status: RegistrationApiStatus.unprocessableEntity,
+        message: 'validation',
+        errors: {
+          'name': ['name error'],
+        },
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, '表示名を確認して、もう一度入力してください。');
+      expect(ui.passwordError, isNull);
+      expect(ui.formError, isNull);
+    });
+
+    test('422(password) はパスワードエラーを返す', () {
+      const r = RegistrationApiResult(
+        statusCode: 422,
+        status: RegistrationApiStatus.unprocessableEntity,
+        message: 'validation',
+        errors: {
+          'password': ['password error'],
+        },
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, 'パスワードを8文字以上で入力し直してください。');
+      expect(ui.formError, isNull);
+      expect(ui.showLoginAction, false);
+    });
+
+    test('422(その他フィールド) は汎用フォームエラーを返す', () {
+      const r = RegistrationApiResult(
+        statusCode: 422,
+        status: RegistrationApiStatus.unprocessableEntity,
+        message: 'validation',
+        errors: {
+          'email': ['email error'],
+        },
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, isNull);
+      expect(ui.formError, '入力内容を確認して、もう一度お試しください。');
+      expect(ui.showLoginAction, false);
+    });
+
+    test('429 は待機メッセージを返す', () {
+      const r = RegistrationApiResult(
+        statusCode: 429,
+        status: RegistrationApiStatus.tooManyRequests,
+        message: '',
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.formError, '試行回数の上限に達しました。しばらく待ってからもう一度お試しください。');
+      expect(ui.showLoginAction, false);
+    });
+
+    test('networkError はカスタムメッセージを優先する', () {
+      const r = RegistrationApiResult(
+        statusCode: 0,
+        status: RegistrationApiStatus.networkError,
+        message: 'カスタムエラー',
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, isNull);
+      expect(ui.formError, 'カスタムエラー');
+      expect(ui.showLoginAction, false);
+    });
+
+    test('networkError(メッセージなし) は接続確認文言を返す', () {
+      const r = RegistrationApiResult(
+        statusCode: 0,
+        status: RegistrationApiStatus.networkError,
+        message: '',
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, isNull);
+      expect(ui.formError, '通信に失敗しました。接続を確認してください。');
+      expect(ui.showLoginAction, false);
+    });
+
+    test('unknownError はデフォルト失敗文言を返す', () {
+      const r = RegistrationApiResult(
+        statusCode: 500,
+        status: RegistrationApiStatus.unknownError,
+        message: '',
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, isNull);
+      expect(ui.formError, '会員登録に失敗しました。時間をおいて再度お試しください。');
+      expect(ui.showLoginAction, false);
+    });
+  });
+
   group('registrationSendOtpErrorMessage', () {
     test('成功時は空文字', () {
       const r = RegistrationApiResult(
@@ -114,10 +239,7 @@ void main() {
         status: RegistrationApiStatus.networkError,
         message: '',
       );
-      expect(
-        registrationSendOtpErrorMessage(r),
-        '通信に失敗しました。接続を確認してください。',
-      );
+      expect(registrationSendOtpErrorMessage(r), '通信に失敗しました。接続を確認してください。');
     });
 
     test('unknownError はデフォルト失敗文言', () {
@@ -179,10 +301,7 @@ void main() {
         status: RegistrationApiStatus.networkError,
         message: '',
       );
-      expect(
-        registrationVerifyOtpErrorMessage(r),
-        '通信に失敗しました。接続を確認してください。',
-      );
+      expect(registrationVerifyOtpErrorMessage(r), '通信に失敗しました。接続を確認してください。');
     });
 
     test('unknownError はデフォルト失敗文言', () {

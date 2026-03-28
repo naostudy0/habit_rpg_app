@@ -1,5 +1,19 @@
 import '../services/api_service.dart';
 
+class RegistrationCompleteFailureUiState {
+  final String? nameError;
+  final String? passwordError;
+  final String? formError;
+  final bool showLoginAction;
+
+  const RegistrationCompleteFailureUiState({
+    this.nameError,
+    this.passwordError,
+    this.formError,
+    this.showLoginAction = false,
+  });
+}
+
 /// 会員登録APIの `data` から再送可能時刻を解釈する。
 ///
 /// バックエンドが `resend_available_at`（ISO8601）または
@@ -51,6 +65,63 @@ String? parseRegistrationTokenFromData(Map<String, dynamic>? data) {
     return token.trim();
   }
   return null;
+}
+
+String? _firstFieldError(RegistrationApiResult result, String field) {
+  final errors = result.errors;
+  if (errors == null) {
+    return null;
+  }
+  final list = errors[field];
+  if (list is List && list.isNotEmpty && list.first is String) {
+    return list.first as String;
+  }
+  return null;
+}
+
+RegistrationCompleteFailureUiState mapRegistrationCompleteFailure(
+  RegistrationApiResult result,
+) {
+  if (result.isSuccess) {
+    return const RegistrationCompleteFailureUiState();
+  }
+
+  if (result.isValidationError) {
+    final hasNameError = _firstFieldError(result, 'name') != null;
+    final hasPasswordError = _firstFieldError(result, 'password') != null;
+    return RegistrationCompleteFailureUiState(
+      nameError: hasNameError ? '表示名を確認して、もう一度入力してください。' : null,
+      passwordError: hasPasswordError ? 'パスワードを8文字以上で入力し直してください。' : null,
+      formError: hasNameError || hasPasswordError
+          ? null
+          : '入力内容を確認して、もう一度お試しください。',
+    );
+  }
+
+  if (result.isConflict) {
+    return const RegistrationCompleteFailureUiState(
+      formError: 'このメールアドレスは既に登録済みです。ログイン画面へ進んでください。',
+      showLoginAction: true,
+    );
+  }
+
+  if (result.isTooManyRequests) {
+    return const RegistrationCompleteFailureUiState(
+      formError: '試行回数の上限に達しました。しばらく待ってからもう一度お試しください。',
+    );
+  }
+
+  if (result.status == RegistrationApiStatus.networkError) {
+    return RegistrationCompleteFailureUiState(
+      formError: result.message.isNotEmpty
+          ? result.message
+          : '通信に失敗しました。接続を確認してください。',
+    );
+  }
+
+  return const RegistrationCompleteFailureUiState(
+    formError: '会員登録に失敗しました。時間をおいて再度お試しください。',
+  );
 }
 
 /// OTP送信API失敗時に画面へ表示するメッセージ。
