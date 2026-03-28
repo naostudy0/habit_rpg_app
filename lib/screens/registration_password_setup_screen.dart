@@ -27,6 +27,7 @@ class _RegistrationPasswordSetupScreenState
   String? _serverErrorName;
   String? _serverErrorPassword;
   String? _formError;
+  bool _isSubmitting = false;
   bool _obscurePassword = true;
   bool _obscurePasswordConfirm = true;
 
@@ -39,7 +40,13 @@ class _RegistrationPasswordSetupScreenState
   }
 
   Future<void> _submit() async {
+    if (_isSubmitting) {
+      return;
+    }
+    _isSubmitting = true;
+
     if (!_formKey.currentState!.validate()) {
+      _isSubmitting = false;
       return;
     }
 
@@ -48,6 +55,7 @@ class _RegistrationPasswordSetupScreenState
       setState(() {
         _formError = 'セッションが無効です。最初からやり直してください。';
       });
+      _isSubmitting = false;
       return;
     }
 
@@ -94,6 +102,7 @@ class _RegistrationPasswordSetupScreenState
       });
     } finally {
       _loadingService.setLoading(_loadingOperation, false);
+      _isSubmitting = false;
     }
   }
 
@@ -276,7 +285,9 @@ class _RegistrationPasswordSetupScreenState
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _loadingService.isLoading(_loadingOperation)
+                    onPressed:
+                        (_loadingService.isLoading(_loadingOperation) ||
+                            _isSubmitting)
                         ? null
                         : _submit,
                     child: Text(
