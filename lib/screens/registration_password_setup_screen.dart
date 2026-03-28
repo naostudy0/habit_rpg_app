@@ -14,10 +14,14 @@ typedef CompleteRegistrationRequest =
 
 class RegistrationPasswordSetupScreen extends StatefulWidget {
   final CompleteRegistrationRequest? completeRegistrationRequest;
+  final RegistrationFlowService? flowService;
+  final LoadingService? loadingService;
 
   const RegistrationPasswordSetupScreen({
     super.key,
     this.completeRegistrationRequest,
+    this.flowService,
+    this.loadingService,
   });
 
   @override
@@ -32,8 +36,8 @@ class _RegistrationPasswordSetupScreenState
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
   final _apiService = ApiService();
-  final _loadingService = LoadingService();
-  final _flow = RegistrationFlowService();
+  late final LoadingService _loadingService;
+  late final RegistrationFlowService _flow;
 
   static const String _loadingOperation = 'registration_complete';
 
@@ -44,6 +48,13 @@ class _RegistrationPasswordSetupScreenState
   bool _isSubmitting = false;
   bool _obscurePassword = true;
   bool _obscurePasswordConfirm = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadingService = widget.loadingService ?? LoadingService();
+    _flow = widget.flowService ?? RegistrationFlowService();
+  }
 
   @override
   void dispose() {
@@ -101,8 +112,7 @@ class _RegistrationPasswordSetupScreenState
       }
 
       setState(() => _applyCompleteFailure(result));
-    } catch (e, st) {
-      debugPrint('completeRegistration failed: $e\n$st');
+    } catch (_) {
       if (!mounted) {
         return;
       }
@@ -172,6 +182,7 @@ class _RegistrationPasswordSetupScreenState
                 ],
                 const SizedBox(height: 24),
                 TextFormField(
+                  key: const Key('username_field'),
                   controller: _nameController,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
@@ -200,6 +211,7 @@ class _RegistrationPasswordSetupScreenState
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  key: const Key('password_field'),
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
@@ -241,6 +253,7 @@ class _RegistrationPasswordSetupScreenState
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  key: const Key('password_confirm_field'),
                   controller: _passwordConfirmController,
                   obscureText: _obscurePasswordConfirm,
                   decoration: InputDecoration(
@@ -275,6 +288,7 @@ class _RegistrationPasswordSetupScreenState
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
+                    key: const Key('registration_submit_button'),
                     onPressed:
                         (_loadingService.isLoading(_loadingOperation) ||
                             _isSubmitting)

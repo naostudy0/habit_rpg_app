@@ -80,6 +80,8 @@ void main() {
         message: 'conflict',
       );
       final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, isNull);
       expect(ui.formError, 'このメールアドレスは既に登録済みです。ログイン画面へ進んでください。');
       expect(ui.showLoginAction, true);
     });
