@@ -101,6 +101,38 @@ void main() {
       expect(ui.formError, isNull);
     });
 
+    test('422(password) はパスワードエラーを返す', () {
+      const r = RegistrationApiResult(
+        statusCode: 422,
+        status: RegistrationApiStatus.unprocessableEntity,
+        message: 'validation',
+        errors: {
+          'password': ['password error'],
+        },
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, 'パスワードを8文字以上で入力し直してください。');
+      expect(ui.formError, isNull);
+      expect(ui.showLoginAction, false);
+    });
+
+    test('422(その他フィールド) は汎用フォームエラーを返す', () {
+      const r = RegistrationApiResult(
+        statusCode: 422,
+        status: RegistrationApiStatus.unprocessableEntity,
+        message: 'validation',
+        errors: {
+          'email': ['email error'],
+        },
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, isNull);
+      expect(ui.formError, '入力内容を確認して、もう一度お試しください。');
+      expect(ui.showLoginAction, false);
+    });
+
     test('429 は待機メッセージを返す', () {
       const r = RegistrationApiResult(
         statusCode: 429,
@@ -109,6 +141,45 @@ void main() {
       );
       final ui = mapRegistrationCompleteFailure(r);
       expect(ui.formError, '試行回数の上限に達しました。しばらく待ってからもう一度お試しください。');
+      expect(ui.showLoginAction, false);
+    });
+
+    test('networkError はカスタムメッセージを優先する', () {
+      const r = RegistrationApiResult(
+        statusCode: 0,
+        status: RegistrationApiStatus.networkError,
+        message: 'カスタムエラー',
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, isNull);
+      expect(ui.formError, 'カスタムエラー');
+      expect(ui.showLoginAction, false);
+    });
+
+    test('networkError(メッセージなし) は接続確認文言を返す', () {
+      const r = RegistrationApiResult(
+        statusCode: 0,
+        status: RegistrationApiStatus.networkError,
+        message: '',
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, isNull);
+      expect(ui.formError, '通信に失敗しました。接続を確認してください。');
+      expect(ui.showLoginAction, false);
+    });
+
+    test('unknownError はデフォルト失敗文言を返す', () {
+      const r = RegistrationApiResult(
+        statusCode: 500,
+        status: RegistrationApiStatus.unknownError,
+        message: '',
+      );
+      final ui = mapRegistrationCompleteFailure(r);
+      expect(ui.nameError, isNull);
+      expect(ui.passwordError, isNull);
+      expect(ui.formError, '会員登録に失敗しました。時間をおいて再度お試しください。');
       expect(ui.showLoginAction, false);
     });
   });

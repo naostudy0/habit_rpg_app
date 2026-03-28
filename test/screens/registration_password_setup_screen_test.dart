@@ -265,6 +265,55 @@ void main() {
       expect(flow.currentStep, RegistrationStep.passwordSetup);
     });
 
+    testWidgets('422時にフィールドエラーが表示される', (WidgetTester tester) async {
+      await pumpScreen(
+        tester,
+        completeRegistration:
+            ({
+              required String registrationToken,
+              required String name,
+              required String password,
+            }) async => const RegistrationApiResult(
+              statusCode: 422,
+              status: RegistrationApiStatus.unprocessableEntity,
+              message: 'validation',
+              errors: {
+                'name': ['name error'],
+              },
+            ),
+      );
+
+      await fillValidForm(tester);
+      await tester.tap(find.byKey(const Key('registration_submit_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('表示名を確認して、もう一度入力してください。'), findsOneWidget);
+      expect(flow.currentStep, RegistrationStep.passwordSetup);
+    });
+
+    testWidgets('429時に待機メッセージが表示される', (WidgetTester tester) async {
+      await pumpScreen(
+        tester,
+        completeRegistration:
+            ({
+              required String registrationToken,
+              required String name,
+              required String password,
+            }) async => const RegistrationApiResult(
+              statusCode: 429,
+              status: RegistrationApiStatus.tooManyRequests,
+              message: '',
+            ),
+      );
+
+      await fillValidForm(tester);
+      await tester.tap(find.byKey(const Key('registration_submit_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('試行回数の上限に達しました。しばらく待ってからもう一度お試しください。'), findsOneWidget);
+      expect(flow.currentStep, RegistrationStep.passwordSetup);
+    });
+
     testWidgets('正常系ではフローがcompletedへ進む', (WidgetTester tester) async {
       await pumpScreen(
         tester,
