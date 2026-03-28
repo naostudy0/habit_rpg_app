@@ -111,6 +111,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
+              // ignore: deprecated_member_use
               value: _selectedCategory,
               decoration: InputDecoration(
                 border: OutlineInputBorder(
