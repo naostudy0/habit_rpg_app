@@ -206,9 +206,10 @@ class ApiService {
 
   // 会員登録OTP送信API
   Future<RegistrationApiResult> sendRegistrationOtp(String email) async {
+    final normalizedEmail = email.trim();
     return _postRegistrationApi(
       endpoint: '/api/auth/register/otp/send',
-      body: {'email': email},
+      body: {'email': normalizedEmail},
       successStatusCodes: const {200},
       defaultSuccessMessage: 'ワンタイムパスワードを送信しました。',
       defaultErrorMessage: 'ワンタイムパスワードの送信に失敗しました。',
@@ -220,9 +221,10 @@ class ApiService {
     required String email,
     required String otp,
   }) async {
+    final normalizedEmail = email.trim();
     return _postRegistrationApi(
       endpoint: '/api/auth/register/otp/verify',
-      body: {'email': email, 'otp': otp},
+      body: {'email': normalizedEmail, 'otp': otp},
       successStatusCodes: const {200},
       defaultSuccessMessage: 'ワンタイムパスワードを検証しました。',
       defaultErrorMessage: 'ワンタイムパスワードの検証に失敗しました。',
@@ -595,7 +597,7 @@ class ApiService {
       final body = <String, dynamic>{};
 
       if (name != null) body['name'] = name;
-      if (email != null) body['email'] = email;
+      if (email != null) body['email'] = email.trim();
       if (password != null) body['password'] = password;
       if (isDarkMode != null) body['is_dark_mode'] = isDarkMode;
       if (is24HourFormat != null) body['is_24_hour_format'] = is24HourFormat;
