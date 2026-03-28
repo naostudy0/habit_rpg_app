@@ -103,13 +103,23 @@ class _RegistrationPasswordSetupScreenState
     _formError = null;
 
     if (result.isValidationError) {
-      _serverErrorName = _fieldError(result, 'name');
-      _serverErrorPassword = _fieldError(result, 'password');
-      if (_serverErrorName == null && _serverErrorPassword == null) {
-        _formError = result.message.isNotEmpty
-            ? result.message
-            : '入力内容を確認してください。';
+      final hasNameError = _fieldError(result, 'name') != null;
+      final hasPasswordError = _fieldError(result, 'password') != null;
+      if (hasNameError) {
+        _serverErrorName = '表示名を確認して、もう一度入力してください。';
       }
+      if (hasPasswordError) {
+        _serverErrorPassword = 'パスワードを8文字以上で入力し直してください。';
+      }
+
+      if (_serverErrorName == null && _serverErrorPassword == null) {
+        _formError = '入力内容を確認して、もう一度お試しください。';
+      }
+      return;
+    }
+
+    if (result.isConflict) {
+      _formError = 'このメールアドレスは既に登録済みです。ログイン画面へ進んでください。';
       return;
     }
 
@@ -118,16 +128,14 @@ class _RegistrationPasswordSetupScreenState
 
   String _nonFieldMessageForCompleteFailure(RegistrationApiResult result) {
     if (result.isTooManyRequests) {
-      return result.message.isNotEmpty
-          ? result.message
-          : '試行回数が上限に達しました。しばらく時間をおいてからお試しください。';
+      return '試行回数の上限に達しました。しばらく待ってからもう一度お試しください。';
     }
     if (result.status == RegistrationApiStatus.networkError) {
       return result.message.isNotEmpty
           ? result.message
           : '通信に失敗しました。接続を確認してください。';
     }
-    return result.message.isNotEmpty ? result.message : '会員登録に失敗しました。';
+    return '会員登録に失敗しました。時間をおいて再度お試しください。';
   }
 
   String? _fieldError(RegistrationApiResult result, String field) {

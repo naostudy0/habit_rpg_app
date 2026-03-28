@@ -53,50 +53,26 @@ String? parseRegistrationTokenFromData(Map<String, dynamic>? data) {
   return null;
 }
 
-String? _firstFieldError(RegistrationApiResult result, String field) {
-  final errors = result.errors;
-  if (errors == null) {
-    return null;
-  }
-  final list = errors[field];
-  if (list is List && list.isNotEmpty && list.first is String) {
-    return list.first as String;
-  }
-  return null;
-}
-
 /// OTP送信API失敗時に画面へ表示するメッセージ。
 String registrationSendOtpErrorMessage(RegistrationApiResult result) {
   if (result.isSuccess) {
     return '';
   }
   if (result.isConflict) {
-    return result.message.isNotEmpty
-        ? result.message
-        : 'このメールアドレスはすでに登録されています。';
+    return 'このメールアドレスは既に登録済みです。ログイン画面からログインしてください。';
   }
   if (result.isTooManyRequests) {
-    return result.message.isNotEmpty
-        ? result.message
-        : '送信回数が上限に達しました。しばらく時間をおいてからお試しください。';
+    return '送信が集中しています。しばらく待ってから再送してください。';
   }
   if (result.isValidationError) {
-    final emailErr = _firstFieldError(result, 'email');
-    if (emailErr != null) {
-      return emailErr;
-    }
-    return result.message.isNotEmpty
-        ? result.message
-        : 'メールアドレスを確認してください。';
+    return 'メールアドレスの形式を確認して、もう一度入力してください。';
   }
   if (result.status == RegistrationApiStatus.networkError) {
     return result.message.isNotEmpty
         ? result.message
         : '通信に失敗しました。接続を確認してください。';
   }
-  return result.message.isNotEmpty
-      ? result.message
-      : 'ワンタイムパスワードの送信に失敗しました。';
+  return 'ワンタイムパスワードの送信に失敗しました。時間をおいて再度お試しください。';
 }
 
 /// OTP検証API失敗時に画面へ表示するメッセージ（誤コード・期限切れ・試行超過など）。
@@ -105,25 +81,15 @@ String registrationVerifyOtpErrorMessage(RegistrationApiResult result) {
     return '';
   }
   if (result.isTooManyRequests) {
-    return result.message.isNotEmpty
-        ? result.message
-        : '試行回数が上限に達しました。しばらく時間をおいてからお試しください。';
+    return '試行回数の上限に達しました。しばらく待ってからコードを再送してください。';
   }
   if (result.isValidationError) {
-    final otpErr = _firstFieldError(result, 'otp');
-    if (otpErr != null) {
-      return otpErr;
-    }
-    return result.message.isNotEmpty
-        ? result.message
-        : 'ワンタイムパスワードが正しくないか、有効期限が切れています。';
+    return 'コードが正しくないか有効期限切れです。再入力するか、コードを再送してください。';
   }
   if (result.status == RegistrationApiStatus.networkError) {
     return result.message.isNotEmpty
         ? result.message
         : '通信に失敗しました。接続を確認してください。';
   }
-  return result.message.isNotEmpty
-      ? result.message
-      : 'ワンタイムパスワードの検証に失敗しました。';
+  return 'ワンタイムパスワードの検証に失敗しました。時間をおいて再度お試しください。';
 }

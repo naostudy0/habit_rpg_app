@@ -6,37 +6,34 @@ void main() {
   group('parseResendAvailableAtFromData', () {
     test('resend_available_at が ISO8601 のときパースする', () {
       final ref = DateTime.utc(2026, 3, 27, 12, 0, 0);
-      final at = parseResendAvailableAtFromData(
-        {'resend_available_at': '2026-03-27T12:01:00.000Z'},
-        reference: ref,
-      );
+      final at = parseResendAvailableAtFromData({
+        'resend_available_at': '2026-03-27T12:01:00.000Z',
+      }, reference: ref);
       expect(at, DateTime.parse('2026-03-27T12:01:00.000Z'));
     });
 
     test('壊れた resend_available_at は retry_after にフォールバックする', () {
       final ref = DateTime.utc(2026, 3, 27, 12, 0, 0);
-      final at = parseResendAvailableAtFromData(
-        {'resend_available_at': 'not-a-date', 'retry_after': 45},
-        reference: ref,
-      );
+      final at = parseResendAvailableAtFromData({
+        'resend_available_at': 'not-a-date',
+        'retry_after': 45,
+      }, reference: ref);
       expect(at, ref.add(const Duration(seconds: 45)));
     });
 
     test('retry_after が秒数のとき reference から加算する', () {
       final ref = DateTime.utc(2026, 3, 27, 12, 0, 0);
-      final at = parseResendAvailableAtFromData(
-        {'retry_after': 45},
-        reference: ref,
-      );
+      final at = parseResendAvailableAtFromData({
+        'retry_after': 45,
+      }, reference: ref);
       expect(at, ref.add(const Duration(seconds: 45)));
     });
 
     test('cooldown_seconds にも対応する', () {
       final ref = DateTime.utc(2026, 3, 27, 12, 0, 0);
-      final at = parseResendAvailableAtFromData(
-        {'cooldown_seconds': 30},
-        reference: ref,
-      );
+      final at = parseResendAvailableAtFromData({
+        'cooldown_seconds': 30,
+      }, reference: ref);
       expect(at, ref.add(const Duration(seconds: 30)));
     });
 
@@ -55,7 +52,10 @@ void main() {
 
     test('空や欠落のとき null', () {
       expect(parseRegistrationTokenFromData(null), isNull);
-      expect(parseRegistrationTokenFromData({'registration_token': ''}), isNull);
+      expect(
+        parseRegistrationTokenFromData({'registration_token': ''}),
+        isNull,
+      );
     });
   });
 
@@ -69,23 +69,31 @@ void main() {
       expect(registrationSendOtpErrorMessage(r), '');
     });
 
-    test('409 は衝突メッセージ', () {
+    test('409 はログイン誘導の固定文言', () {
       const r = RegistrationApiResult(
         statusCode: 409,
         status: RegistrationApiStatus.conflict,
         message: '既に登録済みです',
       );
-      expect(registrationSendOtpErrorMessage(r), '既に登録済みです');
+      expect(
+        registrationSendOtpErrorMessage(r),
+        'このメールアドレスは既に登録済みです。ログイン画面からログインしてください。',
+      );
     });
 
-    test('422 は email フィールドを優先', () {
+    test('422 は再入力促しの固定文言', () {
       const r = RegistrationApiResult(
         statusCode: 422,
         status: RegistrationApiStatus.unprocessableEntity,
         message: 'validation',
-        errors: {'email': ['形式が不正です']},
+        errors: {
+          'email': ['形式が不正です'],
+        },
       );
-      expect(registrationSendOtpErrorMessage(r), '形式が不正です');
+      expect(
+        registrationSendOtpErrorMessage(r),
+        'メールアドレスの形式を確認して、もう一度入力してください。',
+      );
     });
   });
 
@@ -98,18 +106,23 @@ void main() {
       );
       expect(
         registrationVerifyOtpErrorMessage(r),
-        '試行回数が上限に達しました。しばらく時間をおいてからお試しください。',
+        '試行回数の上限に達しました。しばらく待ってからコードを再送してください。',
       );
     });
 
-    test('422 は otp フィールドを優先', () {
+    test('422 は再入力/再送案内の固定文言', () {
       const r = RegistrationApiResult(
         statusCode: 422,
         status: RegistrationApiStatus.unprocessableEntity,
         message: 'ng',
-        errors: {'otp': ['コードが違います']},
+        errors: {
+          'otp': ['コードが違います'],
+        },
       );
-      expect(registrationVerifyOtpErrorMessage(r), 'コードが違います');
+      expect(
+        registrationVerifyOtpErrorMessage(r),
+        'コードが正しくないか有効期限切れです。再入力するか、コードを再送してください。',
+      );
     });
   });
 }
