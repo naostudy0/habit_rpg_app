@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/loading_service.dart';
 import '../services/registration_flow_service.dart';
+import 'registration_completed_screen.dart';
 import 'registration_email_screen.dart';
 import 'registration_otp_screen.dart';
 import 'registration_password_setup_screen.dart';
@@ -78,7 +79,7 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
               ),
               RegistrationStep.completed => const KeyedSubtree(
                 key: ValueKey('reg_done'),
-                child: SizedBox.shrink(),
+                child: RegistrationCompletedScreen(),
               ),
             },
           ),

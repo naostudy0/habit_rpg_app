@@ -147,11 +147,12 @@ class ApiService {
   // ログインAPI
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
+      final normalizedEmail = email.trim();
       final headers = await _headers;
       final response = await http.post(
         Uri.parse('$_baseUrl/api/auth/login'),
         headers: headers,
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode({'email': normalizedEmail, 'password': password}),
       );
 
       if (response.statusCode == 200) {

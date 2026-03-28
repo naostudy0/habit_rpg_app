@@ -41,8 +41,9 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       try {
-        final response = await _apiService.login(
-          _emailController.text,
+        final email = _emailController.text.trim();
+        await _apiService.login(
+          email,
           _passwordController.text,
         );
 
@@ -80,9 +81,7 @@ class _LoginPageState extends State<LoginPage> {
           }
         }
       } finally {
-        if (mounted) {
-          _loadingService.setLoading(_loadingOperation, false);
-        }
+        _loadingService.setLoading(_loadingOperation, false);
       }
     }
   }
@@ -122,10 +121,10 @@ class _LoginPageState extends State<LoginPage> {
                     if (_emailError != null) {
                       return _emailError;
                     }
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'メールアドレスを入力してください';
                     }
-                    if (!value.contains('@')) {
+                    if (!value.trim().contains('@')) {
                       return '有効なメールアドレスを入力してください';
                     }
                     return null;
@@ -170,6 +169,23 @@ class _LoginPageState extends State<LoginPage> {
                           )
                         : const Text('ログイン', style: TextStyle(fontSize: 16)),
                   ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _loadingService.isLoading(_loadingOperation)
+                      ? null
+                      : () => Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/',
+                          (route) => false,
+                        ),
+                  child: const Text('TOPページへ戻る'),
+                ),
+                TextButton(
+                  onPressed: _loadingService.isLoading(_loadingOperation)
+                      ? null
+                      : () => Navigator.pushNamed(context, '/register'),
+                  child: const Text('新規登録はこちら'),
                 ),
               ],
             ),
