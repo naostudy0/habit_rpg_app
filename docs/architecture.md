@@ -26,6 +26,7 @@ lib/
 │   ├── mypage_top.dart
 │   ├── password_change_page.dart
 │   ├── profile_edit_page.dart
+│   ├── registration_flow_page.dart  # RegistrationFlowPage
 │   ├── settings_page.dart
 │   ├── task_calendar_page.dart
 │   ├── task_create_page.dart
@@ -37,6 +38,7 @@ lib/
 │   ├── auth_service.dart
 │   ├── error_handler.dart
 │   ├── loading_service.dart
+│   ├── registration_flow_service.dart # RegistrationFlowService
 │   └── settings_service.dart
 ├── utils/               # ユーティリティ
 │   └── time_formatter.dart

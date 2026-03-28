@@ -110,7 +110,32 @@ Authorization: Bearer {token}
 }
 ```
 
-`data` には `resend_available_at`（ISO8601）または `retry_after`（秒）が返る場合があります。
+`data` の返却条件:
+
+- 通常の送信成功（200）では `resend_available_at`（ISO8601）を返します。
+- レート制限（429 / throttling）では `retry_after`（秒）を返します。
+- API仕様上は上記どちらか一方を返す想定です（排他的）。
+- 後方互換のため、クライアント実装は両方を受け取っても動作し、`resend_available_at` を優先して扱います。
+
+例（通常の送信成功）:
+```json
+{
+  "message": "ワンタイムパスワードを送信しました。",
+  "data": {
+    "resend_available_at": "2026-03-27T12:01:00.000Z"
+  }
+}
+```
+
+例（レート制限）:
+```json
+{
+  "message": "リクエストが多すぎます。",
+  "data": {
+    "retry_after": 45
+  }
+}
+```
 
 **エラーレスポンス**:
 - 409 Conflict: 既存アカウント（重複メール）
@@ -167,6 +192,15 @@ Authorization: Bearer {token}
 - 409 Conflict: 既存アカウント（重複メール）
 - 422 Unprocessable Entity: name/password バリデーションエラー
 - 429 Too Many Requests: 試行回数超過
+
+`409 Conflict` が返る主なタイミング（`registration_token` / OTP verification との関係）:
+
+- OTP verification が成功して `registration_token` を取得した後でも、最終登録時に重複チェックで 409 になる場合があります。
+- 典型例は、OTP verification 後から `/api/auth/register/complete` 呼び出しまでの間に、別セッションや別端末で同じメールアドレスが先に登録されたケースです（レースコンディション）。
+- トークン期限切れやトークン無効は 409 ではなく、通常は 422（入力/状態不正）として扱う想定です。クライアントは 422 受信時に再送・再認証フローへ戻します。
+
+`409` は「完全に回避できる」エラーではなく、並行操作がある環境では発生し得る想定エラーです。  
+クライアントは必ずハンドリングし、ログイン導線を提示してください（本アプリでは「ログインへ」ボタンを表示）。
 
 ---
 
