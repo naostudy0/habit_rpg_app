@@ -38,6 +38,16 @@ class TopPage extends StatelessWidget {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/register');
+              },
+              child: const Text(
+                '新規登録',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
           ],
         ),
       ),
