@@ -11,7 +11,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController(text: 'ユーザー');
   final _bioController = TextEditingController(text: '習慣をゲーム化して楽しく続けています！');
-  String _selectedAvatar = 'default';
 
   @override
   void dispose() {

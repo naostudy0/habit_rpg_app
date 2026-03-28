@@ -73,7 +73,6 @@ class ErrorHandler {
         }
         return 'リクエストの処理に失敗しました。';
       case ErrorType.unknown:
-      default:
         return '予期しないエラーが発生しました。';
     }
   }
@@ -117,7 +116,6 @@ class ErrorHandler {
       case ErrorType.api:
       case ErrorType.validation:
       case ErrorType.notFound:
-      default:
         return 800; // INFO
     }
   }
@@ -154,7 +152,6 @@ class ErrorHandler {
       case ErrorType.api:
       case ErrorType.notFound:
       case ErrorType.unknown:
-      default:
         backgroundColor = Colors.red;
         break;
     }
@@ -234,7 +231,6 @@ class ErrorHandler {
       case ErrorType.api:
         return 'エラー';
       case ErrorType.unknown:
-      default:
         return 'エラーが発生しました';
     }
   }

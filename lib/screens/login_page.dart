@@ -42,10 +42,7 @@ class _LoginPageState extends State<LoginPage> {
 
       try {
         final email = _emailController.text.trim();
-        await _apiService.login(
-          email,
-          _passwordController.text,
-        );
+        await _apiService.login(email, _passwordController.text);
 
         // ログイン成功時の処理
         if (mounted) {

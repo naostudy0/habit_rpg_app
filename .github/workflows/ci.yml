@@ -37,12 +37,10 @@ jobs:
 
       - name: Verify formatting
         run: dart format --set-exit-if-changed .
-        continue-on-error: true
 
       # 静的解析
       - name: Analyze code
         run: flutter analyze
-        continue-on-error: true
 
       # テスト実行（カバレッジ生成）
       - name: Run tests

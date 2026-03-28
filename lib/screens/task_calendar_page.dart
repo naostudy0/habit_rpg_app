@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'task_list_page.dart';
 import 'task_create_page.dart';
 import 'task_edit_page.dart';
 import '../services/api_service.dart';
@@ -175,59 +174,6 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
         );
       }
     }
-  }
-
-  // カレンダーの日付ビルダー
-  Widget _calendarDayBuilder(
-    BuildContext context,
-    DateTime day,
-    DateTime focusedDay,
-  ) {
-    final dateKey = DateTime(day.year, day.month, day.day);
-    final dayTasks = _events[dateKey] ?? [];
-    final isSelected = isSameDay(day, _selectedDay);
-    final isToday = isSameDay(day, DateTime.now());
-
-    return Container(
-      margin: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
-            : Colors.transparent,
-        shape: BoxShape.circle,
-        border: isToday
-            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
-            : null,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '${day.day}',
-            style: TextStyle(
-              color: isSelected
-                  ? Theme.of(context).colorScheme.primary
-                  : isToday
-                  ? Theme.of(context).colorScheme.primary
-                  : Colors.black87,
-              fontWeight: isSelected || isToday
-                  ? FontWeight.bold
-                  : FontWeight.normal,
-            ),
-          ),
-          if (dayTasks.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.only(top: 2),
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                shape: BoxShape.circle,
-              ),
-            ),
-        ],
-      ),
-    );
   }
 
   // 日付が同じかどうかを判定
@@ -450,7 +396,9 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                 shape: BoxShape.circle,
               ),
               todayDecoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
               markerDecoration: BoxDecoration(
@@ -546,11 +494,6 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
 
           final task = selectedTasks[index];
 
-          // Taskオブジェクトの型チェック
-          if (task is! Task) {
-            return const SizedBox.shrink();
-          }
-
           // UUIDが空の場合はスキップ
           if (task.uuid.isEmpty) {
             return const SizedBox.shrink();
@@ -571,10 +514,10 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
                   height: 50,
                   decoration: BoxDecoration(
                     color: task.isCompleted
-                        ? Colors.green.withOpacity(0.2)
+                        ? Colors.green.withValues(alpha: 0.2)
                         : Theme.of(
                             context,
-                          ).colorScheme.primary.withOpacity(0.2),
+                          ).colorScheme.primary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: isCompleting
