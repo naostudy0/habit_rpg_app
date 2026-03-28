@@ -79,15 +79,6 @@ class _RegistrationPasswordSetupScreenState
 
       if (result.isSuccess) {
         _flow.completeRegistration();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('会員登録が完了しました。ログインしてください。'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil('/login', (route) => false);
         return;
       }
 
