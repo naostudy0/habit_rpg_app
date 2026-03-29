@@ -6,8 +6,8 @@
 
 ### 必要なツール
 
-- Flutter SDK 3.8.1以上
-- Dart SDK 3.8.1以上
+- Flutter SDK 3.41.6以上
+- Dart SDK 3.11.0以上
 - Git
 - IDE（VS Code、Android Studio、IntelliJ IDEAなど）
 
