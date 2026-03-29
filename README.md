@@ -65,7 +65,7 @@ Docker上のLLM
 
 ## 技術スタック（フロントエンド）
 
-- フレームワーク: Flutter 3.8.1+
+- フレームワーク: Flutter 3.41.6+
 - 言語: Dart
 - 状態管理: StatefulWidget（シンプルさを重視）
 - HTTP通信: http
@@ -86,8 +86,8 @@ Docker上のLLM
 
 ## 必要な環境（Flutter）
 
-- Flutter SDK 3.8.1以上
-- Dart SDK 3.8.1以上
+- Flutter SDK 3.41.6以上
+- Dart SDK 3.11.0以上
 - 各プラットフォームの開発環境
   - iOS: Xcode
   - Android: Android Studio など
