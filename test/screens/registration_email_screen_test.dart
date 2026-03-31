@@ -52,10 +52,10 @@ void main() {
       );
 
       await tester.enterText(
-        find.byType(TextFormField),
+        find.byKey(const Key('email_input')),
         '  new-user@example.com  ',
       );
-      await tester.tap(find.text('ワンタイムパスワードを送信'));
+      await tester.tap(find.byKey(const Key('send_otp_button')));
       await tester.pumpAndSettle();
 
       expect(sentEmails, ['new-user@example.com']);
@@ -72,8 +72,14 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byType(TextFormField), 'next@example.com');
-      await tester.tap(find.text('ワンタイムパスワードを送信'));
+      expect(flow.currentStep, RegistrationStep.emailInput);
+      expect(flow.email, isEmpty);
+
+      await tester.enterText(
+        find.byKey(const Key('email_input')),
+        'next@example.com',
+      );
+      await tester.tap(find.byKey(const Key('send_otp_button')));
       await tester.pumpAndSettle();
 
       expect(flow.currentStep, RegistrationStep.otpVerification);
@@ -91,8 +97,11 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byType(TextFormField), 'dup@example.com');
-      await tester.tap(find.text('ワンタイムパスワードを送信'));
+      await tester.enterText(
+        find.byKey(const Key('email_input')),
+        'dup@example.com',
+      );
+      await tester.tap(find.byKey(const Key('send_otp_button')));
       await tester.pumpAndSettle();
 
       expect(
@@ -112,8 +121,11 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byType(TextFormField), 'bad@example.com');
-      await tester.tap(find.text('ワンタイムパスワードを送信'));
+      await tester.enterText(
+        find.byKey(const Key('email_input')),
+        'bad@example.com',
+      );
+      await tester.tap(find.byKey(const Key('send_otp_button')));
       await tester.pumpAndSettle();
 
       expect(find.text('メールアドレスの形式を確認して、もう一度入力してください。'), findsOneWidget);
@@ -130,8 +142,11 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byType(TextFormField), 'slow@example.com');
-      await tester.tap(find.text('ワンタイムパスワードを送信'));
+      await tester.enterText(
+        find.byKey(const Key('email_input')),
+        'slow@example.com',
+      );
+      await tester.tap(find.byKey(const Key('send_otp_button')));
       await tester.pumpAndSettle();
 
       expect(find.text('送信が集中しています。しばらく待ってから再送してください。'), findsOneWidget);
@@ -146,8 +161,11 @@ void main() {
         },
       );
 
-      await tester.enterText(find.byType(TextFormField), 'error@example.com');
-      await tester.tap(find.text('ワンタイムパスワードを送信'));
+      await tester.enterText(
+        find.byKey(const Key('email_input')),
+        'error@example.com',
+      );
+      await tester.tap(find.byKey(const Key('send_otp_button')));
       await tester.pumpAndSettle();
 
       expect(
@@ -169,12 +187,17 @@ void main() {
         },
       );
 
-      await tester.enterText(find.byType(TextFormField), 'once@example.com');
-      await tester.tap(find.text('ワンタイムパスワードを送信'));
+      await tester.enterText(
+        find.byKey(const Key('email_input')),
+        'once@example.com',
+      );
+      await tester.tap(find.byKey(const Key('send_otp_button')));
       await tester.pump();
 
       expect(callCount, 1);
-      final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
+      final button = tester.widget<ElevatedButton>(
+        find.byKey(const Key('send_otp_button')),
+      );
       expect(button.onPressed, isNull);
 
       completer.complete(

@@ -128,6 +128,7 @@ class _RegistrationEmailScreenState extends State<RegistrationEmailScreen> {
                 ),
                 const SizedBox(height: 24),
                 TextFormField(
+                  key: const Key('email_input'),
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   autofillHints: const [AutofillHints.email],
@@ -156,6 +157,7 @@ class _RegistrationEmailScreenState extends State<RegistrationEmailScreen> {
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
+                    key: const Key('send_otp_button'),
                     onPressed: _loadingService.isLoading(_loadingOperation)
                         ? null
                         : _submit,
