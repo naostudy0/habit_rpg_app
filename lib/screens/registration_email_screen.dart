@@ -5,8 +5,20 @@ import '../services/registration_flow_service.dart';
 import '../utils/registration_response_parsing.dart';
 import '../widgets/loading_widget.dart';
 
+typedef SendRegistrationOtpRequest =
+    Future<RegistrationApiResult> Function(String email);
+
 class RegistrationEmailScreen extends StatefulWidget {
-  const RegistrationEmailScreen({super.key});
+  final SendRegistrationOtpRequest? sendRegistrationOtpRequest;
+  final RegistrationFlowService? flowService;
+  final LoadingService? loadingService;
+
+  const RegistrationEmailScreen({
+    super.key,
+    this.sendRegistrationOtpRequest,
+    this.flowService,
+    this.loadingService,
+  });
 
   @override
   State<RegistrationEmailScreen> createState() =>
@@ -17,8 +29,8 @@ class _RegistrationEmailScreenState extends State<RegistrationEmailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _apiService = ApiService();
-  final _loadingService = LoadingService();
-  final _flow = RegistrationFlowService();
+  late final LoadingService _loadingService;
+  late final RegistrationFlowService _flow;
   late final VoidCallback _emailListener;
 
   static const String _loadingOperation = 'registration_send_otp';
@@ -29,6 +41,8 @@ class _RegistrationEmailScreenState extends State<RegistrationEmailScreen> {
   @override
   void initState() {
     super.initState();
+    _loadingService = widget.loadingService ?? LoadingService();
+    _flow = widget.flowService ?? RegistrationFlowService();
     _emailController.text = _flow.email;
     _emailListener = () {
       _flow.setEmail(_emailController.text);
@@ -53,7 +67,9 @@ class _RegistrationEmailScreenState extends State<RegistrationEmailScreen> {
 
     try {
       final email = _emailController.text.trim();
-      final result = await _apiService.sendRegistrationOtp(email);
+      final sendRegistrationOtp =
+          widget.sendRegistrationOtpRequest ?? _apiService.sendRegistrationOtp;
+      final result = await sendRegistrationOtp(email);
 
       if (!mounted) {
         return;
