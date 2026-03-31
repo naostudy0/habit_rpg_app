@@ -61,6 +61,45 @@ void main() {
       expect(sentEmails, ['new-user@example.com']);
     });
 
+    testWidgets('クライアント側バリデーションNG時は送信処理を呼ばない', (WidgetTester tester) async {
+      await pumpScreen(
+        tester,
+        sendRegistrationOtp: (email) async {
+          sentEmails.add(email);
+          return const RegistrationApiResult(
+            statusCode: 200,
+            status: RegistrationApiStatus.success,
+            message: 'ok',
+            data: {'retry_after': 60},
+          );
+        },
+      );
+
+      await tester.enterText(find.byKey(const Key('email_input')), '');
+      await tester.tap(find.byKey(const Key('send_otp_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('メールアドレスを入力してください'), findsOneWidget);
+      expect(sentEmails, isEmpty);
+      expect(flow.currentStep, RegistrationStep.emailInput);
+
+      await tester.enterText(find.byKey(const Key('email_input')), '   ');
+      await tester.tap(find.byKey(const Key('send_otp_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('メールアドレスを入力してください'), findsOneWidget);
+      expect(sentEmails, isEmpty);
+      expect(flow.currentStep, RegistrationStep.emailInput);
+
+      await tester.enterText(
+        find.byKey(const Key('email_input')),
+        'invalid-email',
+      );
+      await tester.tap(find.byKey(const Key('send_otp_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('有効なメールアドレスを入力してください'), findsOneWidget);
+      expect(sentEmails, isEmpty);
+      expect(flow.currentStep, RegistrationStep.emailInput);
+    });
+
     testWidgets('成功時に OTP画面へ遷移する', (WidgetTester tester) async {
       await pumpScreen(
         tester,
