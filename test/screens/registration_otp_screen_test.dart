@@ -99,12 +99,13 @@ void main() {
         ),
       );
 
+      expect(flow.canResendOtp(), isTrue);
       await tester.tap(find.byKey(const Key('otp_resend_button')));
       await tester.pumpAndSettle();
 
       expect(flow.currentStep, RegistrationStep.otpVerification);
       expect(flow.canResendOtp(), isFalse);
-      expect(flow.resendRemaining().inSeconds, greaterThanOrEqualTo(110));
+      expect(flow.resendRemaining().inSeconds, inInclusiveRange(100, 120));
       expect(find.textContaining('再送まであと'), findsOneWidget);
     });
 
