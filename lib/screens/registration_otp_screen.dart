@@ -38,8 +38,8 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _otpController = TextEditingController();
   final _apiService = ApiService();
-  late final LoadingService _loadingService;
-  late final RegistrationFlowService _flow;
+  late LoadingService _loadingService;
+  late RegistrationFlowService _flow;
 
   static const String _loadingOperation = 'registration_otp_step';
   static const Duration _defaultResendCooldown = Duration(seconds: 60);
@@ -57,6 +57,17 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
         setState(() {});
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant RegistrationOtpScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.loadingService != widget.loadingService) {
+      _loadingService = widget.loadingService ?? LoadingService();
+    }
+    if (oldWidget.flowService != widget.flowService) {
+      _flow = widget.flowService ?? RegistrationFlowService();
+    }
   }
 
   @override
