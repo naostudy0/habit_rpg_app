@@ -88,6 +88,40 @@ void main() {
       expect(flow.registrationToken, 'token-123');
     });
 
+    testWidgets('成功レスポンスでも registration_token 欠落時は遷移しない', (
+      WidgetTester tester,
+    ) async {
+      String? requestedEmail;
+      String? requestedOtp;
+
+      await pumpScreen(
+        tester,
+        verifyRegistrationOtp:
+            ({required String email, required String otp}) async {
+              requestedEmail = email;
+              requestedOtp = otp;
+              return const RegistrationApiResult(
+                statusCode: 200,
+                status: RegistrationApiStatus.success,
+                message: 'ok',
+                data: {},
+              );
+            },
+      );
+
+      expect(flow.currentStep, RegistrationStep.otpVerification);
+      expect(flow.registrationToken, isNull);
+      await tester.enterText(find.byKey(const Key('otp_input')), '123456');
+      await tester.tap(find.byKey(const Key('otp_verify_button')));
+      await tester.pumpAndSettle();
+
+      expect(requestedEmail, 'new-user@example.com');
+      expect(requestedOtp, '123456');
+      expect(flow.currentStep, RegistrationStep.otpVerification);
+      expect(flow.registrationToken, isNull);
+      expect(find.text('登録トークンを取得できませんでした。最初からやり直してください。'), findsOneWidget);
+    });
+
     testWidgets('再送成功時にクールダウン情報が反映される', (WidgetTester tester) async {
       await pumpScreen(
         tester,
