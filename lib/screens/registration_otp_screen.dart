@@ -8,8 +8,27 @@ import '../services/registration_flow_service.dart';
 import '../utils/registration_response_parsing.dart';
 import '../widgets/loading_widget.dart';
 
+typedef VerifyRegistrationOtpRequest =
+    Future<RegistrationApiResult> Function({
+      required String email,
+      required String otp,
+    });
+typedef SendRegistrationOtpRequest =
+    Future<RegistrationApiResult> Function(String email);
+
 class RegistrationOtpScreen extends StatefulWidget {
-  const RegistrationOtpScreen({super.key});
+  final VerifyRegistrationOtpRequest? verifyRegistrationOtpRequest;
+  final SendRegistrationOtpRequest? sendRegistrationOtpRequest;
+  final RegistrationFlowService? flowService;
+  final LoadingService? loadingService;
+
+  const RegistrationOtpScreen({
+    super.key,
+    this.verifyRegistrationOtpRequest,
+    this.sendRegistrationOtpRequest,
+    this.flowService,
+    this.loadingService,
+  });
 
   @override
   State<RegistrationOtpScreen> createState() => _RegistrationOtpScreenState();
@@ -19,8 +38,8 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _otpController = TextEditingController();
   final _apiService = ApiService();
-  final _loadingService = LoadingService();
-  final _flow = RegistrationFlowService();
+  late LoadingService _loadingService;
+  late RegistrationFlowService _flow;
 
   static const String _loadingOperation = 'registration_otp_step';
   static const Duration _defaultResendCooldown = Duration(seconds: 60);
@@ -31,11 +50,24 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
   @override
   void initState() {
     super.initState();
+    _loadingService = widget.loadingService ?? LoadingService();
+    _flow = widget.flowService ?? RegistrationFlowService();
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         setState(() {});
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant RegistrationOtpScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.loadingService != widget.loadingService) {
+      _loadingService = widget.loadingService ?? LoadingService();
+    }
+    if (oldWidget.flowService != widget.flowService) {
+      _flow = widget.flowService ?? RegistrationFlowService();
+    }
   }
 
   @override
@@ -64,7 +96,10 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
     _loadingService.setLoading(_loadingOperation, true);
 
     try {
-      final result = await _apiService.verifyRegistrationOtp(
+      final verifyRegistrationOtp =
+          widget.verifyRegistrationOtpRequest ??
+          _apiService.verifyRegistrationOtp;
+      final result = await verifyRegistrationOtp(
         email: _flow.email,
         otp: _otpController.text.trim(),
       );
@@ -110,7 +145,9 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
     _loadingService.setLoading(_loadingOperation, true);
 
     try {
-      final result = await _apiService.sendRegistrationOtp(_flow.email);
+      final sendRegistrationOtp =
+          widget.sendRegistrationOtpRequest ?? _apiService.sendRegistrationOtp;
+      final result = await sendRegistrationOtp(_flow.email);
 
       if (!mounted) {
         return;
@@ -160,6 +197,7 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
           title: const Text('ワンタイムパスワード入力'),
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           leading: IconButton(
+            key: const Key('otp_back_button'),
             icon: const Icon(Icons.arrow_back),
             onPressed: _anyLoading ? null : () => _flow.goBack(),
           ),
@@ -177,6 +215,7 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
                 ),
                 const SizedBox(height: 24),
                 TextFormField(
+                  key: const Key('otp_input'),
                   controller: _otpController,
                   keyboardType: TextInputType.number,
                   maxLength: 6,
@@ -215,6 +254,7 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
                 ],
                 const SizedBox(height: 16),
                 TextButton(
+                  key: const Key('otp_resend_button'),
                   onPressed: (!_anyLoading && canResend) ? _resend : null,
                   child: const Text('コードを再送する'),
                 ),
@@ -222,6 +262,7 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
+                    key: const Key('otp_verify_button'),
                     onPressed: _anyLoading ? null : _verify,
                     child: Text(
                       _loadingService.isLoading(_loadingOperation)
