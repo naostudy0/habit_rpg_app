@@ -26,12 +26,19 @@ class RegistrationFlowPage extends StatefulWidget {
 class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
   late final RegistrationFlowService _flow;
   late final LoadingService _loadingService;
+  late final bool _ownsFlowService;
+  late final bool _ownsLoadingService;
+
+  bool get _isSharedLoadingService =>
+      identical(_loadingService, LoadingService());
 
   bool get _isLoading => _loadingService.isAnyLoading;
 
   @override
   void initState() {
     super.initState();
+    _ownsFlowService = widget.flowService == null;
+    _ownsLoadingService = widget.loadingService == null;
     _flow = widget.flowService ?? RegistrationFlowService();
     _loadingService = widget.loadingService ?? LoadingService();
     _flow.reset();
@@ -39,8 +46,14 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
 
   @override
   void dispose() {
-    _flow.dispose();
     widget.onFlowDispose?.call(_flow);
+    if (_ownsFlowService) {
+      _flow.dispose();
+    }
+    // LoadingService は singleton のため、共有インスタンスは破棄しない。
+    if (_ownsLoadingService && !_isSharedLoadingService) {
+      _loadingService.dispose();
+    }
     super.dispose();
   }
 
