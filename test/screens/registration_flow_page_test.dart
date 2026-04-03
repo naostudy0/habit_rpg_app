@@ -104,7 +104,7 @@ void main() {
       expect(find.byKey(const ValueKey('reg_email')), findsNothing);
     });
 
-    testWidgets('ローディング中は戻る操作を無効化する', (WidgetTester tester) async {
+    testWidgets('ローディング中は先頭ステップで戻る操作を無効化する', (WidgetTester tester) async {
       await pumpHostApp(tester);
       expect(find.byKey(const ValueKey('reg_email')), findsOneWidget);
 
@@ -119,7 +119,29 @@ void main() {
       expect(flow.currentStep, RegistrationStep.emailInput);
     });
 
-    testWidgets('dispose時にFlowServiceのdispose経路が呼ばれる', (
+    testWidgets('ローディング中は戻れるステップでも戻らない', (WidgetTester tester) async {
+      await pumpHostApp(tester);
+
+      flow.moveToOtpVerification(
+        email: 'new-user@example.com',
+        resendAvailableAt: DateTime.now(),
+      );
+      await tester.pumpAndSettle();
+      expect(flow.currentStep, RegistrationStep.otpVerification);
+      expect(find.byKey(const ValueKey('reg_otp')), findsOneWidget);
+
+      loading.setLoading('registration_send_otp', true);
+      await tester.pump();
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+
+      expect(flow.currentStep, RegistrationStep.otpVerification);
+      expect(find.byKey(const ValueKey('reg_otp')), findsOneWidget);
+      expect(find.text('open-flow'), findsNothing);
+    });
+
+    testWidgets('dispose時にonFlowDisposeコールバックが呼ばれる', (
       WidgetTester tester,
     ) async {
       var disposed = false;
