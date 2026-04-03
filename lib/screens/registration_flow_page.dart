@@ -45,6 +45,19 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
   }
 
   @override
+  void didUpdateWidget(covariant RegistrationFlowPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    assert(
+      identical(oldWidget.flowService, widget.flowService),
+      'RegistrationFlowPage does not support swapping flowService after mount.',
+    );
+    assert(
+      identical(oldWidget.loadingService, widget.loadingService),
+      'RegistrationFlowPage does not support swapping loadingService after mount.',
+    );
+  }
+
+  @override
   void dispose() {
     widget.onFlowDispose?.call(_flow);
     if (_ownsFlowService) {

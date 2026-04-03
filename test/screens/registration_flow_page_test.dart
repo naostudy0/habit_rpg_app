@@ -135,5 +135,39 @@ void main() {
 
       expect(disposed, isTrue);
     });
+
+    testWidgets('DIなしでも開閉時に例外なく動作する', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const RegistrationFlowPage(),
+                      ),
+                    );
+                  },
+                  child: const Text('open-default-flow'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('open-default-flow'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('reg_email')), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('open-default-flow'), findsOneWidget);
+      expect(find.byKey(const ValueKey('reg_email')), findsNothing);
+    });
   });
 }
