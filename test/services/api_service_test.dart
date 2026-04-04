@@ -163,6 +163,62 @@ void main() {
       expect(result.message, 'ワンタイムパスワードの送信に失敗しました。');
     });
 
+    test('sendRegistrationOtp: 空文字はHTTPリクエストせず422を返す', () async {
+      final service = buildService((_) async {
+        fail('HTTP request should not be made for empty email');
+      });
+
+      final result = await service.sendRegistrationOtp('');
+      expect(result.statusCode, 422);
+      expect(result.status, RegistrationApiStatus.unprocessableEntity);
+      expect(result.isValidationError, isTrue);
+    });
+
+    test('sendRegistrationOtp: 不正形式メールはHTTPリクエストせず422を返す', () async {
+      final service = buildService((_) async {
+        fail('HTTP request should not be made for invalid email');
+      });
+
+      final result = await service.sendRegistrationOtp('not-an-email');
+      expect(result.statusCode, 422);
+      expect(result.status, RegistrationApiStatus.unprocessableEntity);
+      expect(result.isValidationError, isTrue);
+    });
+
+    test('sendRegistrationOtp: 長すぎるメールはHTTPリクエストせず422を返す', () async {
+      final service = buildService((_) async {
+        fail('HTTP request should not be made for very long email');
+      });
+      final longEmail = '${List.filled(1001, 'a').join()}@example.com';
+
+      final result = await service.sendRegistrationOtp(longEmail);
+      expect(result.statusCode, 422);
+      expect(result.status, RegistrationApiStatus.unprocessableEntity);
+      expect(result.isValidationError, isTrue);
+    });
+
+    test('verifyRegistrationOtp: 200成功を正規化できる', () async {
+      final service = buildService((request) async {
+        expect(request.url.path, '/api/auth/register/otp/verify');
+        return http.Response(
+          jsonEncode({
+            'message': 'verified',
+            'data': {'registration_token': 'reg-token-123'},
+          }),
+          200,
+        );
+      });
+
+      final result = await service.verifyRegistrationOtp(
+        email: 'new-user@example.com',
+        otp: '123456',
+      );
+      expect(result.statusCode, 200);
+      expect(result.status, RegistrationApiStatus.success);
+      expect(result.data?['registration_token'], 'reg-token-123');
+      expect(result.isValidationError, isFalse);
+    });
+
     test('verifyRegistrationOtp: 422時に errors を保持する', () async {
       late String requestPath;
       late String requestBody;
@@ -192,6 +248,45 @@ void main() {
       final decoded = jsonDecode(requestBody) as Map<String, dynamic>;
       expect(decoded['email'], 'new-user@example.com');
       expect(decoded['otp'], '123456');
+    });
+
+    test('verifyRegistrationOtp: 409/429/500を正規化できる', () async {
+      final cases = <int, RegistrationApiStatus>{
+        409: RegistrationApiStatus.conflict,
+        429: RegistrationApiStatus.tooManyRequests,
+        500: RegistrationApiStatus.unknownError,
+      };
+
+      for (final entry in cases.entries) {
+        final service = buildService((_) async {
+          return http.Response(
+            jsonEncode({'message': 'status-${entry.key}'}),
+            entry.key,
+          );
+        });
+
+        final result = await service.verifyRegistrationOtp(
+          email: 'new-user@example.com',
+          otp: '123456',
+        );
+        expect(result.statusCode, entry.key);
+        expect(result.status, entry.value);
+        expect(result.isValidationError, isFalse);
+      }
+    });
+
+    test('verifyRegistrationOtp: ネットワーク例外は networkError にマッピングされる', () async {
+      final service = buildService((_) async {
+        throw Exception('network down');
+      });
+
+      final result = await service.verifyRegistrationOtp(
+        email: 'new-user@example.com',
+        otp: '123456',
+      );
+      expect(result.statusCode, 0);
+      expect(result.status, RegistrationApiStatus.networkError);
+      expect(result.isValidationError, isFalse);
     });
 
     test('completeRegistration: 201成功と name trim を確認できる', () async {
@@ -250,6 +345,44 @@ void main() {
         expect(result.status, entry.value);
         expect(result.message, 'status-${entry.key}');
       }
+    });
+
+    test('completeRegistration: 422時に errors を保持する', () async {
+      final service = buildService((_) async {
+        return http.Response(
+          jsonEncode({
+            'message': 'validation failed',
+            'errors': {
+              'name': ['name is invalid'],
+            },
+          }),
+          422,
+        );
+      });
+
+      final result = await service.completeRegistration(
+        registrationToken: 'token-123',
+        name: 'Tester',
+        password: 'Password123!',
+      );
+      expect(result.statusCode, 422);
+      expect(result.status, RegistrationApiStatus.unprocessableEntity);
+      expect(result.isValidationError, isTrue);
+      expect(result.errors?['name'], ['name is invalid']);
+    });
+
+    test('completeRegistration: ネットワーク例外は networkError にマッピングされる', () async {
+      final service = buildService((_) async {
+        throw Exception('network down');
+      });
+
+      final result = await service.completeRegistration(
+        registrationToken: 'token-123',
+        name: 'Tester',
+        password: 'Password123!',
+      );
+      expect(result.statusCode, 0);
+      expect(result.status, RegistrationApiStatus.networkError);
     });
   });
 }

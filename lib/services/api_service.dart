@@ -121,6 +121,8 @@ class RegistrationApiResult {
 }
 
 class ApiService {
+  static final RegExp _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+
   static final ApiService _instance = ApiService._internal();
   factory ApiService({http.Client? httpClient, AuthService? authService}) {
     if (httpClient != null || authService != null) {
@@ -133,11 +135,20 @@ class ApiService {
   }
   ApiService._internal({http.Client? httpClient, AuthService? authService})
     : _httpClient = httpClient ?? http.Client(),
-      _authService = authService ?? AuthService();
+      _authService = authService ?? AuthService(),
+      _ownsHttpClient = httpClient == null;
 
   final String _baseUrl = EnvironmentConfig.baseUrl;
   final http.Client _httpClient;
   final AuthService _authService;
+  final bool _ownsHttpClient;
+
+  /// Injected [http.Client] instances are managed by the caller and are not closed here.
+  void dispose() {
+    if (_ownsHttpClient) {
+      _httpClient.close();
+    }
+  }
 
   // ヘッダーの設定（認証トークンを自動付与）
   Future<Map<String, String>> get _headers async {
@@ -218,6 +229,10 @@ class ApiService {
   // 会員登録OTP送信API
   Future<RegistrationApiResult> sendRegistrationOtp(String email) async {
     final normalizedEmail = email.trim();
+    final validationResult = _validateRegistrationEmail(normalizedEmail);
+    if (validationResult != null) {
+      return validationResult;
+    }
     return _postRegistrationApi(
       endpoint: '/api/auth/register/otp/send',
       body: {'email': normalizedEmail},
@@ -884,6 +899,32 @@ class ApiService {
     if (errors is Map) {
       return errors.map((key, value) => MapEntry(key.toString(), value));
     }
+    return null;
+  }
+
+  RegistrationApiResult? _validateRegistrationEmail(String email) {
+    if (email.isEmpty) {
+      return const RegistrationApiResult(
+        statusCode: 422,
+        status: RegistrationApiStatus.unprocessableEntity,
+        message: 'メールアドレスを入力してください。',
+        errors: {
+          'email': ['メールアドレスを入力してください。'],
+        },
+      );
+    }
+
+    if (email.length > 254 || !_emailPattern.hasMatch(email)) {
+      return const RegistrationApiResult(
+        statusCode: 422,
+        status: RegistrationApiStatus.unprocessableEntity,
+        message: 'メールアドレスの形式が正しくありません。',
+        errors: {
+          'email': ['メールアドレスの形式が正しくありません。'],
+        },
+      );
+    }
+
     return null;
   }
 }
