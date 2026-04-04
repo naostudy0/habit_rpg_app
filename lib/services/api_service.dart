@@ -122,11 +122,22 @@ class RegistrationApiResult {
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
-  factory ApiService() => _instance;
-  ApiService._internal();
+  factory ApiService({http.Client? httpClient, AuthService? authService}) {
+    if (httpClient != null || authService != null) {
+      return ApiService._internal(
+        httpClient: httpClient,
+        authService: authService,
+      );
+    }
+    return _instance;
+  }
+  ApiService._internal({http.Client? httpClient, AuthService? authService})
+    : _httpClient = httpClient ?? http.Client(),
+      _authService = authService ?? AuthService();
 
   final String _baseUrl = EnvironmentConfig.baseUrl;
-  final AuthService _authService = AuthService();
+  final http.Client _httpClient;
+  final AuthService _authService;
 
   // ヘッダーの設定（認証トークンを自動付与）
   Future<Map<String, String>> get _headers async {
@@ -149,7 +160,7 @@ class ApiService {
     try {
       final normalizedEmail = email.trim();
       final headers = await _headers;
-      final response = await http.post(
+      final response = await _httpClient.post(
         Uri.parse('$_baseUrl/api/auth/login'),
         headers: headers,
         body: jsonEncode({'email': normalizedEmail, 'password': password}),
@@ -255,7 +266,10 @@ class ApiService {
   Future<void> logout() async {
     try {
       final headers = await _headers;
-      await http.post(Uri.parse('$_baseUrl/api/auth/logout'), headers: headers);
+      await _httpClient.post(
+        Uri.parse('$_baseUrl/api/auth/logout'),
+        headers: headers,
+      );
     } catch (e) {
       // エラーが発生してもローカルのトークンは削除する
       // ignore: avoid_print
@@ -270,7 +284,7 @@ class ApiService {
   Future<List<Task>> getTasks() async {
     try {
       final headers = await _headers;
-      final response = await http.get(
+      final response = await _httpClient.get(
         Uri.parse('$_baseUrl/api/tasks'),
         headers: headers,
       );
@@ -337,7 +351,7 @@ class ApiService {
     try {
       final headers = await _headers;
 
-      final response = await http.post(
+      final response = await _httpClient.post(
         Uri.parse('$_baseUrl/api/tasks'),
         headers: headers,
         body: jsonEncode({
@@ -400,7 +414,7 @@ class ApiService {
     try {
       final headers = await _headers;
 
-      final response = await http.put(
+      final response = await _httpClient.put(
         Uri.parse('$_baseUrl/api/tasks/$uuid'),
         headers: headers,
         body: jsonEncode({
@@ -469,7 +483,7 @@ class ApiService {
   Future<void> deleteTask(String uuid) async {
     try {
       final headers = await _headers;
-      final response = await http.delete(
+      final response = await _httpClient.delete(
         Uri.parse('$_baseUrl/api/tasks/$uuid'),
         headers: headers,
       );
@@ -508,7 +522,7 @@ class ApiService {
   }) async {
     try {
       final headers = await _headers;
-      final response = await http.patch(
+      final response = await _httpClient.patch(
         Uri.parse('$_baseUrl/api/tasks/$uuid/complete'),
         headers: headers,
         body: jsonEncode({'is_completed': isCompleted}),
@@ -554,7 +568,7 @@ class ApiService {
   Future<User> getUser() async {
     try {
       final headers = await _headers;
-      final response = await http.get(
+      final response = await _httpClient.get(
         Uri.parse('$_baseUrl/api/user'),
         headers: headers,
       );
@@ -603,7 +617,7 @@ class ApiService {
       if (isDarkMode != null) body['is_dark_mode'] = isDarkMode;
       if (is24HourFormat != null) body['is_24_hour_format'] = is24HourFormat;
 
-      final response = await http.put(
+      final response = await _httpClient.put(
         Uri.parse('$_baseUrl/api/user'),
         headers: headers,
         body: jsonEncode(body),
@@ -639,7 +653,7 @@ class ApiService {
   Future<void> deleteAccount() async {
     try {
       final headers = await _headers;
-      final response = await http.delete(
+      final response = await _httpClient.delete(
         Uri.parse('$_baseUrl/api/user'),
         headers: headers,
       );
@@ -670,7 +684,7 @@ class ApiService {
   Future<List<TaskSuggestion>> getTaskSuggestions() async {
     try {
       final headers = await _headers;
-      final response = await http.get(
+      final response = await _httpClient.get(
         Uri.parse('$_baseUrl/api/task-suggestions'),
         headers: headers,
       );
@@ -734,7 +748,7 @@ class ApiService {
   Future<void> deleteTaskSuggestion(String uuid) async {
     try {
       final headers = await _headers;
-      final response = await http.delete(
+      final response = await _httpClient.delete(
         Uri.parse('$_baseUrl/api/task-suggestions/$uuid'),
         headers: headers,
       );
@@ -781,7 +795,7 @@ class ApiService {
 
     try {
       final headers = await _headers;
-      final response = await http
+      final response = await _httpClient
           .post(
             Uri.parse('$_baseUrl$endpoint'),
             headers: headers,

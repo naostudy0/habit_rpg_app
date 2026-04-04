@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:habit_rpg_app/services/api_service.dart';
 import 'package:habit_rpg_app/services/auth_service.dart';
@@ -97,6 +101,155 @@ void main() {
       expect(conflictResult.isConflict, true);
       expect(tooManyRequestsResult.isTooManyRequests, true);
       expect(tooManyRequestsResult.isValidationError, false);
+    });
+  });
+
+  group('ApiService registration mapping', () {
+    late AuthService authService;
+
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      authService = AuthService();
+    });
+
+    tearDown(() async {
+      await authService.logout();
+    });
+
+    ApiService buildService(
+      Future<http.Response> Function(http.Request request) handler,
+    ) {
+      final mockClient = MockClient(handler);
+      return ApiService(httpClient: mockClient, authService: authService);
+    }
+
+    test('sendRegistrationOtp: 主要HTTPステータスを正規化できる', () async {
+      final cases = <int, RegistrationApiStatus>{
+        200: RegistrationApiStatus.success,
+        409: RegistrationApiStatus.conflict,
+        422: RegistrationApiStatus.unprocessableEntity,
+        429: RegistrationApiStatus.tooManyRequests,
+        500: RegistrationApiStatus.unknownError,
+      };
+
+      for (final entry in cases.entries) {
+        final service = buildService((request) async {
+          expect(request.url.path, '/api/auth/register/otp/send');
+          final decoded = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(decoded['email'], 'new-user@example.com');
+          return http.Response(
+            jsonEncode({'message': 'status-${entry.key}'}),
+            entry.key,
+          );
+        });
+
+        final result = await service.sendRegistrationOtp(
+          '  new-user@example.com  ',
+        );
+        expect(result.statusCode, entry.key);
+        expect(result.status, entry.value);
+        expect(result.message, 'status-${entry.key}');
+      }
+    });
+
+    test('sendRegistrationOtp: ネットワーク例外は networkError にマッピングされる', () async {
+      final service = buildService((_) async {
+        throw Exception('network down');
+      });
+
+      final result = await service.sendRegistrationOtp('user@example.com');
+      expect(result.statusCode, 0);
+      expect(result.status, RegistrationApiStatus.networkError);
+      expect(result.message, 'ワンタイムパスワードの送信に失敗しました。');
+    });
+
+    test('verifyRegistrationOtp: 422時に errors を保持する', () async {
+      late String requestPath;
+      late String requestBody;
+      final service = buildService((request) async {
+        requestPath = request.url.path;
+        requestBody = request.body;
+        return http.Response(
+          jsonEncode({
+            'message': 'validation failed',
+            'errors': {
+              'otp': ['invalid otp'],
+            },
+          }),
+          422,
+        );
+      });
+
+      final result = await service.verifyRegistrationOtp(
+        email: ' new-user@example.com ',
+        otp: '123456',
+      );
+      expect(result.statusCode, 422);
+      expect(result.status, RegistrationApiStatus.unprocessableEntity);
+      expect(result.isValidationError, isTrue);
+      expect(result.errors?['otp'], ['invalid otp']);
+      expect(requestPath, '/api/auth/register/otp/verify');
+      final decoded = jsonDecode(requestBody) as Map<String, dynamic>;
+      expect(decoded['email'], 'new-user@example.com');
+      expect(decoded['otp'], '123456');
+    });
+
+    test('completeRegistration: 201成功と name trim を確認できる', () async {
+      late String requestPath;
+      late String requestBody;
+      final service = buildService((request) async {
+        requestPath = request.url.path;
+        requestBody = request.body;
+        return http.Response(
+          jsonEncode({
+            'message': 'registration completed',
+            'data': {'user_id': 10},
+          }),
+          201,
+        );
+      });
+
+      final result = await service.completeRegistration(
+        registrationToken: 'token-123',
+        name: '  Test User  ',
+        password: 'Password123!',
+      );
+      expect(result.statusCode, 201);
+      expect(result.status, RegistrationApiStatus.created);
+      expect(result.isSuccess, isTrue);
+      expect(result.data?['user_id'], 10);
+      expect(requestPath, '/api/auth/register/complete');
+      final decoded = jsonDecode(requestBody) as Map<String, dynamic>;
+      expect(decoded['registration_token'], 'token-123');
+      expect(decoded['name'], 'Test User');
+      expect(decoded['password'], 'Password123!');
+    });
+
+    test('completeRegistration: 409/429/500を正規化できる', () async {
+      final cases = <int, RegistrationApiStatus>{
+        409: RegistrationApiStatus.conflict,
+        429: RegistrationApiStatus.tooManyRequests,
+        500: RegistrationApiStatus.unknownError,
+      };
+
+      for (final entry in cases.entries) {
+        final service = buildService((request) async {
+          expect(request.url.path, '/api/auth/register/complete');
+          return http.Response(
+            jsonEncode({'message': 'status-${entry.key}'}),
+            entry.key,
+          );
+        });
+
+        final result = await service.completeRegistration(
+          registrationToken: 'token-123',
+          name: 'Tester',
+          password: 'Password123!',
+        );
+        expect(result.statusCode, entry.key);
+        expect(result.status, entry.value);
+        expect(result.message, 'status-${entry.key}');
+      }
     });
   });
 }
