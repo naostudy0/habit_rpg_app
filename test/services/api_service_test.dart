@@ -120,7 +120,12 @@ void main() {
       Future<http.Response> Function(http.Request request) handler,
     ) {
       final mockClient = MockClient(handler);
-      return ApiService(httpClient: mockClient, authService: authService);
+      final service = ApiService(
+        httpClient: mockClient,
+        authService: authService,
+      );
+      addTearDown(service.dispose);
+      return service;
     }
 
     test('sendRegistrationOtp: 主要HTTPステータスを正規化できる', () async {
@@ -192,6 +197,33 @@ void main() {
       final longEmail = '${List.filled(1001, 'a').join()}@example.com';
 
       final result = await service.sendRegistrationOtp(longEmail);
+      expect(result.statusCode, 422);
+      expect(result.status, RegistrationApiStatus.unprocessableEntity);
+      expect(result.isValidationError, isTrue);
+    });
+
+    test('sendRegistrationOtp: 254文字メールは送信できる', () async {
+      var httpCalled = false;
+      final service = buildService((request) async {
+        httpCalled = true;
+        expect(request.url.path, '/api/auth/register/otp/send');
+        return http.Response(jsonEncode({'message': 'ok'}), 200);
+      });
+      final email254 = '${List.filled(242, 'a').join()}@example.com';
+
+      final result = await service.sendRegistrationOtp(email254);
+      expect(result.statusCode, 200);
+      expect(result.status, RegistrationApiStatus.success);
+      expect(httpCalled, isTrue);
+    });
+
+    test('sendRegistrationOtp: 255文字メールはHTTPリクエストせず422を返す', () async {
+      final service = buildService((_) async {
+        fail('HTTP request should not be made for 255-char email');
+      });
+      final email255 = '${List.filled(243, 'a').join()}@example.com';
+
+      final result = await service.sendRegistrationOtp(email255);
       expect(result.statusCode, 422);
       expect(result.status, RegistrationApiStatus.unprocessableEntity);
       expect(result.isValidationError, isTrue);

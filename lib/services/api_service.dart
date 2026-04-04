@@ -142,9 +142,14 @@ class ApiService {
   final http.Client _httpClient;
   final AuthService _authService;
   final bool _ownsHttpClient;
+  bool get _isSingletonInstance => identical(this, _instance);
 
-  /// Injected [http.Client] instances are managed by the caller and are not closed here.
+  /// 注入された [http.Client] は呼び出し元で管理し、このサービスでは close しません
   void dispose() {
+    if (_isSingletonInstance) {
+      // singleton はアプリ全体で共有されるため、外部から dispose しない
+      return;
+    }
     if (_ownsHttpClient) {
       _httpClient.close();
     }
